@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shadn’s Learning Hub</title>
+<style>
+:root{--bg:#f5f7fa;--card:#fff;--ink:#14263a;--mute:#5d6b7a;--line:#dde3ea;--acc:#1f4e8c;--gold:#c8921a;--ok:#2f7d4f}
+[data-theme=dark]{--bg:#0e1621;--card:#16212f;--ink:#e8edf3;--mute:#94a3b3;--line:#27364a;--acc:#6aa3e8;--gold:#e3b04b;--ok:#5cc08a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+[dir=rtl] body{font-family:"Noto Naskh Arabic",Tahoma,system-ui,sans-serif}
+h1,h2,h3{font-family:"Iowan Old Style",Georgia,serif;font-weight:600;margin:0 0 .4em;line-height:1.2}
+h1{font-size:1.9rem}h2{font-size:1.2rem}
+.top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card)}
+.brand b{font:600 1.1rem Georgia,serif;display:block}.brand small{color:var(--gold);font-size:.8rem}
+.tools{display:flex;gap:8px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--acc);background:var(--acc);color:#fff;padding:9px 14px}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button.danger{background:transparent;color:#c0392b;border-color:#c0392b}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.nav{display:flex;gap:4px;overflow-x:auto;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line)}
+.nav a{white-space:nowrap;padding:8px 14px;border-radius:8px;color:var(--mute);text-decoration:none}
+.nav a.on{background:var(--acc);color:#fff}
+main{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+.hero{padding:8px 0 20px}.hero p{color:var(--mute);margin:0}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card.big{grid-column:1/-1}
+.num{font:600 2rem Georgia,serif}.lbl{color:var(--mute);font-size:.9rem}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--gold)}
+.chart{display:flex;align-items:flex-end;gap:8px;height:130px;margin-top:10px}
+.chart div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.75rem;color:var(--mute)}
+.chart span{width:100%;background:var(--acc);border-radius:4px 4px 0 0;min-height:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select{font:inherit;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);max-width:100%}
+.soon{border-style:dashed}.soon p{color:var(--mute);margin:.3em 0 0}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+textarea{font:inherit;width:100%;min-height:110px;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+.msg{color:var(--mute);font-size:.9rem;margin:6px 0}.chip{font-size:.75rem;border:1px solid var(--line);border-radius:20px;padding:1px 8px;color:var(--mute)}
+.flash{text-align:center;padding:36px 16px}.flash .w{font:600 2rem Georgia,serif}
+.item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.item.done b{text-decoration:line-through;color:var(--mute)}.small{padding:5px 9px;font-size:.85rem}
+details summary{cursor:pointer;font-weight:600}.fg{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:10px}
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:20;justify-content:space-around;gap:0;overflow:visible;padding:6px 4px calc(6px + env(safe-area-inset-bottom));border-top:1px solid var(--line);border-bottom:0}
+.nav a{flex:1;text-align:center;font-size:.72rem;padding:4px 2px;line-height:1.2}
+.nav a span{display:block;font-size:1.3rem}
+main{padding-bottom:96px}
+button,.nav a{min-height:44px}
+details>summary{padding:4px 0}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b id="brandName">Shadn’s Learning Hub</b><small data-i="tagline"></small></div>
+  <div class="tools">
+    <button id="langBtn" class="ghost" aria-label="Language">عربي</button>
+    <button id="themeBtn" class="ghost" aria-label="Theme">◐</button>
+  </div>
+</header>
+<nav id="nav" class="nav"></nav>
+<main id="view"></main>
+<div id="toast" role="status"></div>
+<script>
+(function(){
+'use strict';
+var KEY='shadnHub.v1';
+var T={en:{tagline:'Learn Better. Grow Further.',dash:'Dashboard',english:'British English',german:'German',alsun:'Alsun',settings:'Settings',
+ hi:'Welcome back, ',sub:'Everything here is calculated from the study time you log.',
+ prog:'Overall progress',lessons:'Completed lessons',exams:'Passed exams',avg:'Average exam score',hours:'Total study hours',streak:'Study streak (days)',
+ today:'Today',goalD:'Daily goal (min)',goalW:'This week (min)',week:'Weekly activity (minutes)',log:'Log study time',subject:'Subject',minutes:'Minutes',add:'Save session',
+ none:'No exams yet',nolesson:'Lessons arrive in the next stage. No lessons yet.',recent:'Recent sessions',norecent:'No sessions logged yet. Log your first one above.',
+ soonT:'Coming in the next stage',soonB:'This section has no lessons yet. The lesson and exam engine is built next.',
+ profile:'Profile',name:'Name',save:'Save',backup:'Backup and restore',backupNote:'Your data is stored only in this browser. Export a backup regularly, especially before clearing browser data or changing device.',
+ exp:'Export backup (JSON)',imp:'Import backup',reset:'Reset all progress',confirm:'Delete all saved progress? This cannot be undone.',saved:'Saved',imported:'Backup imported',bad:'That file is not a valid backup.',days:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+ en:'British English',de:'German',al:'Alsun'},
+ar:{tagline:'تعلّمي أفضل. انطلقي أبعد.',dash:'الرئيسية',english:'الإنجليزية البريطانية',german:'الألمانية',alsun:'ألسن',settings:'الإعدادات',
+ hi:'أهلاً بعودتك، ',sub:'كل الأرقام هنا محسوبة من وقت المذاكرة الذي تسجّلينه.',
+ prog:'التقدم الكلي',lessons:'الدروس المكتملة',exams:'الاختبارات المجتازة',avg:'متوسط الدرجات',hours:'إجمالي ساعات المذاكرة',streak:'أيام متتالية',
+ today:'اليوم',goalD:'الهدف اليومي (دقيقة)',goalW:'هذا الأسبوع (دقيقة)',week:'النشاط الأسبوعي (دقائق)',log:'سجّلي وقت المذاكرة',subject:'المادة',minutes:'الدقائق',add:'حفظ الجلسة',
+ none:'لا اختبارات بعد',nolesson:'الدروس تأتي في المرحلة التالية. لا توجد دروس بعد.',recent:'آخر الجلسات',norecent:'لم تُسجَّل جلسات بعد. سجّلي أول جلسة من الأعلى.',
+ soonT:'قريباً في المرحلة التالية',soonB:'لا توجد دروس في هذا القسم بعد. يُبنى محرك الدروس والاختبارات تالياً.',
+ profile:'الملف الشخصي',name:'الاسم',save:'حفظ',backup:'النسخ الاحتياطي والاستعادة',backupNote:'بياناتك محفوظة في هذا المتصفح فقط. صدّري نسخة احتياطية بانتظام، خاصة قبل مسح بيانات المتصفح أو تغيير الجهاز.',
+ exp:'تصدير نسخة احتياطية (JSON)',imp:'استيراد نسخة احتياطية',reset:'مسح كل التقدم',confirm:'هل تريدين حذف كل التقدم المحفوظ؟ لا يمكن التراجع.',saved:'تم الحفظ',imported:'تم استيراد النسخة',bad:'هذا الملف ليس نسخة احتياطية صالحة.',days:['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'],
+ en:'الإنجليزية البريطانية',de:'الألمانية',al:'ألسن'}};
+Object.assign(T.en,{translator:'Translator',sentences:'Sentences and audio',study:'Study',practice:'Practice',more:'More',wiki:'Encyclopedia',pron:'Pronunciation',tprac:'Translation practice',library:'Library',resources:'Courses',progress:'Progress',mistakes:'Mistakes',vocab:'Vocabulary',planner:'Planner'});Object.assign(T.ar,{translator:'المترجم',sentences:'جمل وصوتيات',study:'ادرسي',practice:'تدرّبي',more:'المزيد',wiki:'الموسوعة',pron:'النطق',tprac:'تدريب الترجمة',library:'المكتبة',resources:'الكورسات',progress:'التقدم',mistakes:'دفتر الأخطاء',vocab:'المفردات',planner:'المخطط'});
+var DEF={v:1,mistakes:[],attempts:[],vocab:[],tasks:[],history:[],name:'Shadn',lang:'en',theme:'light',dailyGoal:30,sessions:[],lessonsDone:[],exams:[]};
+var S=load();
+function load(){try{var r=JSON.parse(localStorage.getItem(KEY));return Object.assign({},DEF,r||{})}catch(e){return Object.assign({},DEF)}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Storage unavailable')}}
+function t(k){return (T[S.lang]||T.en)[k]||T.en[k]||k}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function ds(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(x<10?'0':'')+x}
+function mins(day){return S.sessions.reduce(function(a,s){return a+(s.d===day?s.min:0)},0)}
+function streak(){var d=new Date(),n=0;if(!mins(ds(d)))d.setDate(d.getDate()-1);while(mins(ds(d))>0){n++;d.setDate(d.getDate()-1)}return n}
+function toast(m){var e=document.getElementById('toast');e.textContent=m;e.className='show';setTimeout(function(){e.className=''},2000)}
+function apply(){document.documentElement.lang=S.lang;document.documentElement.dir=S.lang==='ar'?'rtl':'ltr';document.documentElement.dataset.theme=S.theme;
+ document.getElementById('langBtn').textContent=S.lang==='ar'?'English':'عربي';
+ document.querySelector('[data-i=tagline]').textContent=t('tagline');
+ document.getElementById('brandName').textContent=S.lang==='ar'?'منصة '+S.name+' التعليمية':S.name+'’s Learning Hub'}
+window.Hub={get S(){return S},save:save,t:t,esc:esc,ds:ds,toast:toast,render:render,mods:{},L:function(e,a){return S.lang==='ar'?a:e}};
+var routes=['dash','sentences','study','practice','more','wiki','translator','vocab','planner','mistakes','pron','tprac','library','resources','progress','english','german','alsun','settings'];
+function route(){var h=location.hash.slice(1);return routes.indexOf(h)>-1?h:'dash'}
+var TABS=[['dash','🏠',['dash']],['study','📚',['study','english','german','alsun','wiki']],['practice','🎯',['practice','sentences','translator','pron','tprac','library','mistakes']],['vocab','🔤',['vocab']],['more','☰',['more','planner','progress','resources','settings']]];
+function nav(){var r=route();document.getElementById('nav').innerHTML=TABS.map(function(x){return '<a href="#'+x[0]+'"'+(x[2].indexOf(r)>-1?' class="on" aria-current="page"':'')+'><span>'+x[1]+'</span>'+t(x[0]==='dash'?'dash':x[0])+'</a>'}).join('')}
+function cont(){var c=Hub.cont&&Hub.cont(),n=S.vocab.filter(function(w){return w.due<=ds(new Date())}).length;
+ return '<div class="card"><div class="lbl">'+Hub.L('Today','اليوم')+'</div>'+(c?'<b>'+esc(c.title)+'</b><br><button id="cont" data-k="'+c.k+'" data-id="'+c.id+'">'+Hub.L('Continue learning','أكملي التعلم')+'</button> ':'')+(n?'<a href="#vocab"><button class="ghost">'+Hub.L('Review '+n+' words','راجعي '+n+' كلمة')+'</button></a>':'')+'</div><br>'}
+function dash(){
+ var now=new Date(),tot=S.sessions.reduce(function(a,s){return a+s.min},0),today=mins(ds(now)),wk=0,bars='',mx=1,vals=[];
+ for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var m=mins(ds(d));vals.push([d.getDay(),m]);wk+=m;mx=Math.max(mx,m)}
+ bars=vals.map(function(v){return '<div><span style="height:'+Math.round(v[1]/mx*100)+'%"></span>'+t('days')[v[0]]+'</div>'}).join('');
+ var avg=S.exams.length?Math.round(S.exams.reduce(function(a,e){return a+e.score},0)/S.exams.length)+'%':'—';
+ var pass=S.exams.filter(function(e){return e.score>=80}).length;
+ var pct=Math.min(100,Math.round(today/S.dailyGoal*100));
+ var rec=S.sessions.slice(-5).reverse().map(function(s){return '<li>'+esc(s.d)+' · '+esc(s.subject)+' · '+s.min+'</li>'}).join('');
+ return '<section class="hero"><h1>'+t('hi')+esc(S.name)+'</h1><p>'+t('sub')+'</p></section>'+cont()+
+ '<div class="grid"><div class="card"><div class="lbl">'+t('goalD')+'</div><div class="num">'+today+' / '+S.dailyGoal+'</div><div class="bar"><i style="width:'+pct+'%"></i></div></div>'+
+ '<div class="card"><div class="lbl">'+t('goalW')+'</div><div class="num">'+wk+' / '+S.dailyGoal*7+'</div><div class="bar"><i style="width:'+Math.min(100,Math.round(wk/(S.dailyGoal*7)*100))+'%"></i></div></div>'+
+ '<div class="card"><div class="lbl">'+t('streak')+'</div><div class="num">'+streak()+'</div></div>'+
+ '<div class="card"><div class="lbl">'+t('hours')+'</div><div class="num">'+(tot/60).toFixed(1)+'</div></div>'+
+ '<div class="card"><div class="lbl">'+t('lessons')+'</div><div class="num">'+S.lessonsDone.length+'</div></div>'+
+ '<div class="card"><div class="lbl">'+t('exams')+'</div><div class="num">'+pass+'</div></div>'+
+ '<div class="card"><div class="lbl">'+t('avg')+'</div><div class="num">'+avg+'</div></div></div>'+
+ '<div class="grid"><div class="card big"><h2>'+t('week')+'</h2><div class="chart">'+bars+'</div></div>'+
+ '<div class="card big"><h2>'+t('log')+'</h2><div class="row"><label>'+t('subject')+' <select id="sub"><option>'+t('en')+'</option><option>'+t('de')+'</option><option>'+t('al')+'</option></select></label>'+
+ '<label>'+t('minutes')+' <input id="min" type="number" min="1" max="600" value="25"></label><button id="addS">'+t('add')+'</button></div></div>'+
+ '<div class="card big"><h2>'+t('recent')+'</h2>'+(rec?'<ul>'+rec+'</ul>':'<p class="lbl">'+t('norecent')+'</p>')+'</div></div>'+
+ '<div class="grid">'+['english','german','alsun'].map(function(k){return '<a class="card" href="#'+k+'" style="text-decoration:none;color:inherit"><h2>'+t(k)+'</h2>'+prog(k)+'</a>'}).join('')+'</div>'}
+function prog(k){var c=window.COURSE&&COURSE[k];if(!c)return '<div class="lbl">'+t('nolesson')+'</div><div class="bar"><i style="width:0"></i></div>';var n=0,d=0;c.levels.forEach(function(l){l.units.forEach(function(u){u.lessons.forEach(function(x){n++;if(S.lessonsDone.indexOf(x.id)>-1)d++})})});return '<div class="lbl">'+d+' / '+n+'</div><div class="bar"><i style="width:'+Math.round(d/n*100)+'%"></i></div>'}
+function soon(k){return '<h1>'+t(k)+'</h1><div class="card soon"><h2>'+t('soonT')+'</h2><p>'+t('soonB')+'</p></div>'}
+function settings(){return '<h1>'+t('settings')+'</h1><div class="card"><h2>'+t('profile')+'</h2><div class="row"><label>'+t('name')+' <input id="nm" value="'+esc(S.name)+'" maxlength="30"></label>'+
+ '<label>'+t('goalD')+' <input id="gl" type="number" min="5" max="600" value="'+S.dailyGoal+'"></label><button id="sv">'+t('save')+'</button></div></div><br>'+
+ '<div class="card"><h2>'+t('backup')+'</h2><p class="lbl">'+t('backupNote')+'</p><div class="row"><button id="ex">'+t('exp')+'</button><button class="ghost" id="im">'+t('imp')+'</button><input id="fi" type="file" accept="application/json" hidden></div></div><br>'+
+ '<button class="danger" id="rs">'+t('reset')+'</button>'}
+function bind(){
+ var ct=document.getElementById('cont');if(ct)ct.onclick=function(){Hub.open(ct.dataset.k,ct.dataset.id)};
+ var a=document.getElementById('addS');if(a)a.onclick=function(){var m=parseInt(document.getElementById('min').value,10);if(!(m>0))return;
+  S.sessions.push({d:ds(new Date()),min:Math.min(m,600),subject:document.getElementById('sub').value});save();render();toast(t('saved'))};
+ var sv=document.getElementById('sv');if(sv)sv.onclick=function(){S.name=document.getElementById('nm').value.trim()||'Shadn';S.dailyGoal=Math.max(5,parseInt(document.getElementById('gl').value,10)||30);save();apply();toast(t('saved'))};
+ var ex=document.getElementById('ex');if(ex)ex.onclick=function(){var b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),l=document.createElement('a');l.href=u;l.download='shadns-learning-hub-backup-'+ds(new Date())+'.json';l.click();setTimeout(function(){URL.revokeObjectURL(u)},1000)};
+ var im=document.getElementById('im'),fi=document.getElementById('fi');if(im){im.onclick=function(){fi.click()};fi.onchange=function(){var f=fi.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d||d.v!==1||!Array.isArray(d.sessions))throw 0;S=Object.assign({},DEF,d);save();apply();render();toast(t('imported'))}catch(e){toast(t('bad'))}};r.readAsText(f)}}
+ var rs=document.getElementById('rs');if(rs)rs.onclick=function(){if(confirm(t('confirm'))){var l=S.lang,th=S.theme;S=Object.assign({},DEF,{lang:l,theme:th});save();apply();render()}}}
+function render(){var r=route();nav();var m=Hub.mods[r];document.getElementById('view').innerHTML=m?m.html():r==='dash'?dash():r==='settings'?settings():soon(r);bind();if(m&&m.bind)m.bind()}
+document.getElementById('langBtn').onclick=function(){S.lang=S.lang==='ar'?'en':'ar';save();apply();render()};
+document.getElementById('themeBtn').onclick=function(){S.theme=S.theme==='dark'?'light':'dark';save();apply()};
+window.addEventListener('hashchange',render);
+window.addEventListener('load',function(){apply();render()});
+})();
+
+</script>
+<script>
+(function(){
+var H=Hub,L=H.L,q=function(i){return document.getElementById(i)};
+var TAG={gb:'en-GB',us:'en-US',de:'de-DE',ar:'ar'};
+var NAME={gb:['British','بريطاني'],us:['American','أمريكي'],de:['German','ألماني'],ar:['Arabic','عربي']};
+var LN={ar:['Arabic','العربية'],en:['English','الإنجليزية'],de:['German','الألمانية']};
+var st={from:'en',to:'ar',src:'',out:'',acc:'gb'};
+function voices(a){if(!('speechSynthesis' in window))return[];return speechSynthesis.getVoices().filter(function(v){var l=v.lang.replace('_','-').toLowerCase();return a==='ar'?l.indexOf('ar')===0:l===TAG[a].toLowerCase()})}
+H.has=function(a){return voices(a).length>0};
+H.speak=function(text,a,name,cb){
+ if(!('speechSynthesis' in window))return L('Speech is not supported in this browser.','المتصفح لا يدعم النطق.');
+ if(!text)return L('Nothing to read.','لا يوجد نص.');
+ var vs=voices(a);if(!vs.length)return L('No '+TAG[a]+' voice was detected on this device, so nothing was played. Install one in your device’s speech settings.','لم يتم العثور على صوت '+TAG[a]+' على هذا الجهاز فلم يُشغَّل شيء. ثبّتي الصوت من إعدادات النطق في الجهاز.');
+ var v=vs.filter(function(x){return x.name===name})[0]||vs[0];speechSynthesis.cancel();
+ var u=new SpeechSynthesisUtterance(text);u.voice=v;u.lang=v.lang;u.rate=H.rate||1;if(cb)u.onend=cb;speechSynthesis.speak(u);return L('Playing: '+v.name+' ('+v.lang+')','يعمل الآن: '+v.name+' ('+v.lang+')')};
+function avail(){var e=q('avail');if(!e)return;e.textContent=['gb','us','de','ar'].map(function(a){return NAME[a][H.S.lang==='ar'?1:0]+': '+(voices(a).length?'✓':'✗')}).join('   ')}
+function fillSel(a){var s=q('vsel');if(!s)return;s.innerHTML=voices(a).map(function(v){return '<option>'+H.esc(v.name)+'</option>'}).join('')}
+function opts(sel){return Object.keys(LN).map(function(k){return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+LN[k][H.S.lang==='ar'?1:0]+'</option>'}).join('')}
+function vb(id){return '<div class="row">'+['gb','us','de','ar'].map(function(a){return '<button class="ghost small" data-a="'+a+'" data-t="'+id+'">🔊 '+NAME[a][H.S.lang==='ar'?1:0]+'</button>'}).join('')+'<button class="ghost small" id="stop">■ '+L('Stop','إيقاف')+'</button></div>'}
+H.mods.translator={html:function(){
+ return '<h1>'+H.t('translator')+'</h1><div class="card"><div class="row"><select id="from">'+opts(st.from)+'</select><button class="ghost" id="swap" aria-label="swap">⇄</button><select id="to">'+opts(st.to)+'</select></div>'+
+ '<br><textarea id="src" placeholder="'+L('Type or paste text (up to 500 characters)','اكتبي أو الصقي النص (حتى 500 حرف)')+'" maxlength="500">'+H.esc(st.src)+'</textarea>'+vb('src')+
+ '<br><div class="row"><button id="go">'+L('Translate','ترجم')+'</button><button class="ghost" id="clr">'+L('Clear','مسح')+'</button></div><div class="msg" id="st"></div>'+
+ '<textarea id="out" placeholder="'+L('Translation (you can edit it)','الترجمة (يمكنك تعديلها)')+'">'+H.esc(st.out)+'</textarea>'+vb('out')+
+ '<br><div class="row"><label>'+L('Voice','الصوت')+' <select id="vsel"></select></label><button class="ghost" id="cp">'+L('Copy','نسخ')+'</button><button class="ghost" id="sv">'+L('Save to vocabulary','احفظ في المفردات')+'</button></div>'+
+ '<div class="msg" id="vm"></div><div class="msg" id="avail"></div></div><br><div class="card"><h2>'+L('History','السجل')+'</h2>'+
+ (H.S.history.length?H.S.history.map(function(h,i){return '<div class="item"><span>'+H.esc(h.s.slice(0,60))+' → '+H.esc(h.o.slice(0,60))+'</span><button class="ghost small" data-h="'+i+'">'+L('Open','فتح')+'</button></div>'}).join(''):'<p class="msg">'+L('No translations yet.','لا ترجمات بعد.')+'</p>')+'</div>'},
+ bind:function(){
+ avail();fillSel(st.acc);
+ if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=function(){avail();fillSel(st.acc)};
+ function keep(){st.src=q('src').value;st.out=q('out').value;st.from=q('from').value;st.to=q('to').value}
+ q('swap').onclick=function(){keep();var f=st.from;st.from=st.to;st.to=f;var s=st.src;st.src=st.out;st.out=s;H.render()};
+ q('clr').onclick=function(){st.src='';st.out='';H.render()};
+ q('cp').onclick=function(){var o=q('out').value;if(navigator.clipboard)navigator.clipboard.writeText(o).then(function(){H.toast(L('Copied','تم النسخ'))},function(){H.toast('—')})};
+ q('stop').onclick=function(){if('speechSynthesis' in window)speechSynthesis.cancel()};
+ [].forEach.call(document.querySelectorAll('[data-a]'),function(b){b.onclick=function(){st.acc=b.dataset.a;fillSel(st.acc);q('vm').textContent=H.speak(q(b.dataset.t).value,st.acc,q('vsel').value)}});
+ [].forEach.call(document.querySelectorAll('[data-h]'),function(b){b.onclick=function(){var h=H.S.history[b.dataset.h];st={from:h.f,to:h.t,src:h.s,out:h.o,acc:st.acc};H.render()}});
+ q('sv').onclick=function(){keep();if(!st.src.trim())return;var en=st.from!=='ar'?st.from:st.to,w=st.from==='ar'?st.out:st.src,m=st.from==='ar'?st.src:st.out;
+  if(st.from==='ar'&&st.to==='ar')return;H.S.vocab.push({id:Date.now(),word:w.trim(),lang:en,ar:m.trim(),ipa:'',tr:'',def:'',ex:'',syn:'',ant:'',fam:'',pos:'',level:'',cat:'',fav:false,hard:false,box:0,due:H.ds(new Date())});H.save();H.toast(L('Saved','تم الحفظ'))};
+ q('go').onclick=function(){keep();var s=st.src.trim();if(!s)return;if(st.from===st.to){q('st').textContent=L('Choose two different languages.','اختاري لغتين مختلفتين.');return}
+  q('st').textContent='…';
+  fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(s)+'&langpair='+st.from+'|'+st.to).then(function(r){return r.json()}).then(function(d){
+   var o=d.responseData&&d.responseData.translatedText;if(!o)throw 0;st.out=o;q('out').value=o;q('st').textContent='';
+   H.S.history.unshift({f:st.from,t:st.to,s:s,o:o});H.S.history=H.S.history.slice(0,30);H.save()}).catch(function(){q('st').textContent=L('Online translation is unavailable right now. Type the translation yourself; voices and saving still work.','الترجمة عبر الإنترنت غير متاحة الآن. اكتبي الترجمة بنفسك؛ النطق والحفظ يعملان.')})}}};
+})();
+
+</script>
+<script>
+(function(){
+var H=Hub,L=H.L,q=function(i){return document.getElementById(i)},INT=[0,1,2,4,8,16];
+var V={q:'',lang:'',lvl:'',mode:'list',edit:null,queue:[],show:false};
+var F=[['word','Word','الكلمة'],['ipa','IPA','IPA'],['tr','Arabic transliteration','النطق بالعربي'],['ar','Arabic meaning','المعنى بالعربي'],['def','Definition','التعريف'],['ex','Example sentence','جملة مثال'],['syn','Synonyms','مرادفات'],['ant','Antonyms','أضداد'],['fam','Word family','عائلة الكلمة'],['pos','Part of speech','نوع الكلمة'],['cat','Category','التصنيف']];
+var LV=['A1','A2','B1','B2','C1','C2'];
+function today(){return H.ds(new Date())}
+function plus(n){var d=new Date();d.setDate(d.getDate()+n);return H.ds(d)}
+function acc(l){return l==='de'?'de':l==='ar'?'ar':'gb'}
+function due(){return H.S.vocab.filter(function(w){return w.due<=today()})}
+function get(id){return H.S.vocab.filter(function(w){return w.id==id})[0]}
+function form(){var w=V.edit?get(V.edit):{lang:'en',level:'',fav:false,hard:false};
+ return '<details'+(V.edit?' open':'')+'><summary>'+(V.edit?L('Edit word','تعديل كلمة'):L('Add a word','إضافة كلمة'))+'</summary><div class="fg">'+
+ F.map(function(f){return '<label>'+f[H.S.lang==='ar'?2:1]+'<input id="f_'+f[0]+'" value="'+H.esc(w[f[0]]||'')+'"></label>'}).join('')+
+ '<label>'+L('Language','اللغة')+'<select id="f_lang">'+['en','de','ar'].map(function(l){return '<option value="'+l+'"'+(w.lang===l?' selected':'')+'>'+l.toUpperCase()+'</option>'}).join('')+'</select></label>'+
+ '<label>CEFR<select id="f_level"><option value="">—</option>'+LV.map(function(l){return '<option'+(w.level===l?' selected':'')+'>'+l+'</option>'}).join('')+'</select></label>'+
+ '<label><input type="checkbox" id="f_fav"'+(w.fav?' checked':'')+'> '+L('Favourite','مفضلة')+'</label><label><input type="checkbox" id="f_hard"'+(w.hard?' checked':'')+'> '+L('Difficult','صعبة')+'</label></div><br>'+
+ '<div class="row"><button id="vs">'+L('Save word','حفظ الكلمة')+'</button>'+(V.edit?'<button class="ghost" id="vc">'+L('Cancel','إلغاء')+'</button>':'')+'</div></details>'}
+H.mods.vocab={html:function(){
+ var S=H.S;
+ if(V.mode==='cards'){var w=V.queue[0];
+  if(!w)return '<h1>'+L('Flashcards','البطاقات')+'</h1><div class="card flash"><h2>'+L('All done for now','انتهت المراجعة الآن')+'</h2><button id="back">'+L('Back to words','العودة للمفردات')+'</button></div>';
+  return '<h1>'+L('Flashcards','البطاقات')+' ('+V.queue.length+')</h1><div class="card flash"><div class="w">'+H.esc(w.word)+'</div><div class="msg">'+H.esc(w.ipa||'')+'</div><button class="ghost" id="say">🔊</button><div class="msg" id="vm"></div>'+
+  (V.show?'<p><b>'+H.esc(w.ar)+'</b></p><p>'+H.esc(w.def)+'</p><p><i>'+H.esc(w.ex)+'</i></p><div class="row" style="justify-content:center"><button class="danger" id="again">'+L('Again','مرة أخرى')+'</button><button id="good">'+L('Got it','عرفتها')+'</button></div>':'<button id="rev">'+L('Show answer','أظهر الإجابة')+'</button>')+'<br><br><button class="ghost small" id="back">'+L('Stop','إنهاء')+'</button></div>'}
+ var list=S.vocab.filter(function(w){var t=(w.word+' '+w.ar+' '+w.def).toLowerCase();return(!V.q||t.indexOf(V.q.toLowerCase())>-1)&&(!V.lang||w.lang===V.lang)&&(!V.lvl||w.level===V.lvl)});
+ return '<h1>'+H.t('vocab')+'</h1><div class="card"><div class="row"><span>'+S.vocab.length+' '+L('words','كلمة')+' · '+due().length+' '+L('due for review','للمراجعة')+'</span><button id="rv"'+(due().length?'':' disabled')+'>'+L('Review','ابدأ المراجعة')+'</button></div><br>'+form()+'</div><br>'+
+ '<div class="card"><div class="row"><input id="sq" placeholder="'+L('Search','بحث')+'" value="'+H.esc(V.q)+'"><select id="fl"><option value="">'+L('All languages','كل اللغات')+'</option>'+['en','de','ar'].map(function(l){return '<option'+(V.lang===l?' selected':'')+'>'+l+'</option>'}).join('')+'</select><select id="fv"><option value="">CEFR</option>'+LV.map(function(l){return '<option'+(V.lvl===l?' selected':'')+'>'+l+'</option>'}).join('')+'</select></div>'+
+ (list.length?list.map(function(w){return '<div class="item"><span><b>'+H.esc(w.word)+'</b> <span class="chip">'+w.lang+(w.level?' '+w.level:'')+'</span>'+(w.hard?' ⚠':'')+'<br><span class="msg">'+H.esc(w.ar)+'</span></span><span class="row"><button class="ghost small" data-p="'+w.id+'">🔊</button><button class="ghost small" data-f="'+w.id+'">'+(w.fav?'★':'☆')+'</button><button class="ghost small" data-e="'+w.id+'">'+L('Edit','تعديل')+'</button><button class="danger small" data-d="'+w.id+'">'+L('Delete','حذف')+'</button></span></div>'}).join(''):'<p class="msg">'+L('No words yet. Add one above or save from the translator.','لا كلمات بعد. أضيفي كلمة أو احفظيها من المترجم.')+'</p>')+'<div class="msg" id="vm"></div></div>'},
+ bind:function(){
+ var S=H.S;function on(i,f){var e=q(i);if(e)e.onclick=f}
+ on('back',function(){V.mode='list';H.render()});
+ on('rev',function(){V.show=true;H.render()});
+ on('say',function(){var w=V.queue[0];q('vm').textContent=H.speak(w.word,acc(w.lang))});
+ on('again',function(){var w=V.queue.shift();w.box=0;w.due=today();V.queue.push(w);V.show=false;H.save();H.render()});
+ on('good',function(){var w=V.queue.shift();w.box=Math.min(5,w.box+1);w.due=plus(INT[w.box]);V.show=false;H.save();H.render()});
+ on('rv',function(){V.queue=due();V.mode='cards';V.show=false;H.render()});
+ on('vc',function(){V.edit=null;H.render()});
+ on('vs',function(){var o={};F.forEach(function(f){o[f[0]]=q('f_'+f[0]).value.trim()});if(!o.word){H.toast(L('Enter a word','اكتبي الكلمة'));return}
+  o.lang=q('f_lang').value;o.level=q('f_level').value;o.fav=q('f_fav').checked;o.hard=q('f_hard').checked;
+  if(V.edit)Object.assign(get(V.edit),o);else S.vocab.push(Object.assign(o,{id:Date.now(),box:0,due:today()}));
+  V.edit=null;H.save();H.render();H.toast(L('Saved','تم الحفظ'))});
+ var sq=q('sq');if(sq){sq.oninput=function(){V.q=sq.value;var p=sq.selectionStart;H.render();var n=q('sq');n.focus();n.setSelectionRange(p,p)};q('fl').onchange=function(){V.lang=this.value;H.render()};q('fv').onchange=function(){V.lvl=this.value;H.render()}}
+ [].forEach.call(document.querySelectorAll('[data-p]'),function(b){b.onclick=function(){var w=get(b.dataset.p);q('vm').textContent=H.speak(w.word,acc(w.lang))}});
+ [].forEach.call(document.querySelectorAll('[data-f]'),function(b){b.onclick=function(){var w=get(b.dataset.f);w.fav=!w.fav;H.save();H.render()}});
+ [].forEach.call(document.querySelectorAll('[data-e]'),function(b){b.onclick=function(){V.edit=b.dataset.e;H.render();scrollTo(0,0)}});
+ [].forEach.call(document.querySelectorAll('[data-d]'),function(b){b.onclick=function(){if(confirm(L('Delete this word?','حذف هذه الكلمة؟'))){S.vocab=S.vocab.filter(function(w){return w.id!=b.dataset.d});H.save();H.render()}}})}};
+})();
+
+</script>
+<script>
+(function(){
+var H=Hub,L=H.L,q=function(i){return document.getElementById(i)};
+var P={off:0,edit:null},PR={high:[ 'High','عالية'],med:['Medium','متوسطة'],low:['Low','منخفضة']};
+function day(n){var d=new Date();d.setDate(d.getDate()+n);return d}
+function get(id){return H.S.tasks.filter(function(t){return t.id==id})[0]}
+function subj(){return[H.t('en'),H.t('de'),H.t('al')]}
+H.mods.planner={html:function(){
+ var S=H.S,t0=get(P.edit)||{title:'',subject:H.t('en'),date:H.ds(new Date()),time:'18:00',dur:30,pri:'med'};
+ var start=-((new Date().getDay()+1)%7)+P.off*7,out='',total=0,done=0;
+ for(var i=0;i<7;i++){var d=day(start+i),k=H.ds(d),ts=S.tasks.filter(function(t){return t.date===k}).sort(function(a,b){return a.time<b.time?-1:1});
+  out+='<div class="card"><b>'+d.toLocaleDateString(S.lang==='ar'?'ar-EG':'en-GB',{weekday:'long',day:'numeric',month:'short'})+'</b>'+(k===H.ds(new Date())?' <span class="chip">'+L('Today','اليوم')+'</span>':'')+
+  (ts.length?ts.map(function(t){total++;if(t.done)done++;return '<div class="item'+(t.done?' done':'')+'"><span><input type="checkbox" data-c="'+t.id+'"'+(t.done?' checked':'')+'> <b>'+H.esc(t.title)+'</b><br><span class="msg">'+t.time+' · '+t.dur+' '+L('min','د')+' · '+H.esc(t.subject)+' · '+PR[t.pri][S.lang==='ar'?1:0]+'</span></span><span class="row"><button class="ghost small" data-e="'+t.id+'">'+L('Edit','تعديل')+'</button><button class="danger small" data-d="'+t.id+'">'+L('Delete','حذف')+'</button></span></div>'}).join(''):'<p class="msg">'+L('No tasks.','لا مهام.')+'</p>')+'</div><br>'}
+ return '<h1>'+H.t('planner')+'</h1><div class="card"><h2>'+(P.edit?L('Edit task','تعديل مهمة'):L('Add a task','إضافة مهمة'))+'</h2><div class="fg"><label>'+L('Task','المهمة')+'<input id="pt" value="'+H.esc(t0.title)+'" maxlength="80"></label>'+
+ '<label>'+L('Subject','المادة')+'<select id="ps">'+subj().map(function(s){return '<option'+(s===t0.subject?' selected':'')+'>'+s+'</option>'}).join('')+'</select></label>'+
+ '<label>'+L('Date','التاريخ')+'<input id="pd" type="date" value="'+t0.date+'"></label><label>'+L('Time','الوقت')+'<input id="pm" type="time" value="'+t0.time+'"></label>'+
+ '<label>'+L('Minutes','الدقائق')+'<input id="pu" type="number" min="5" max="600" value="'+t0.dur+'"></label><label>'+L('Priority','الأولوية')+'<select id="pp">'+Object.keys(PR).map(function(k){return '<option value="'+k+'"'+(k===t0.pri?' selected':'')+'>'+PR[k][S.lang==='ar'?1:0]+'</option>'}).join('')+'</select></label></div><br>'+
+ '<div class="row"><button id="ps2">'+L('Save task','حفظ المهمة')+'</button>'+(P.edit?'<button class="ghost" id="pc">'+L('Cancel','إلغاء')+'</button>':'')+'</div></div><br>'+
+ '<div class="row"><button class="ghost" id="pv">‹</button><span class="msg">'+done+' / '+total+' '+L('tasks done this week','مهام منجزة هذا الأسبوع')+'</span><button class="ghost" id="nx">›</button></div><br>'+out},
+ bind:function(){
+ var S=H.S;function on(i,f){var e=q(i);if(e)e.onclick=f}
+ on('pv',function(){P.off--;H.render()});on('nx',function(){P.off++;H.render()});on('pc',function(){P.edit=null;H.render()});
+ on('ps2',function(){var o={title:q('pt').value.trim(),subject:q('ps').value,date:q('pd').value,time:q('pm').value||'00:00',dur:Math.max(5,parseInt(q('pu').value,10)||30),pri:q('pp').value};
+  if(!o.title||!o.date){H.toast(L('Enter a task and a date','اكتبي المهمة والتاريخ'));return}
+  if(P.edit)Object.assign(get(P.edit),o);else S.tasks.push(Object.assign(o,{id:Date.now(),done:false}));P.edit=null;H.save();H.render()});
+ [].forEach.call(document.querySelectorAll('[data-c]'),function(c){c.onchange=function(){var t=get(c.dataset.c);t.done=c.checked;
+  S.sessions=S.sessions.filter(function(s){return s.tid!==t.id});if(t.done)S.sessions.push({d:H.ds(new Date()),min:t.dur,subject:t.subject,tid:t.id});H.save();H.render()}});
+ [].forEach.call(document.querySelectorAll('[data-e]'),function(b){b.onclick=function(){P.edit=b.dataset.e;H.render();scrollTo(0,0)}});
+ [].forEach.call(document.querySelectorAll('[data-d]'),function(b){b.onclick=function(){if(confirm(L('Delete this task?','حذف هذه المهمة؟'))){S.tasks=S.tasks.filter(function(t){return t.id!=b.dataset.d});S.sessions=S.sessions.filter(function(s){return s.tid!=b.dataset.d});H.save();H.render()}}})}};
+})();
+
+</script>
+<script>
+window.COURSE=window.COURSE||{};
+COURSE.english={title:"British English",levels:[{id:"A1",units:[
+{id:"a1u1",title:"Unit 1: Meeting people",lessons:[
+{id:"en-a1-be",title:"The verb 'to be' (am, is, are)",
+obj:["Use am, is and are with the correct subject","Make negatives and questions with 'to be'","Give natural British short answers"],
+body:"<p>'To be' is the most important verb in English. It links a subject to a name, job, age, place or feeling.</p><table><tr><th>Subject</th><th>Positive</th><th>Negative</th><th>Question</th></tr><tr><td>I</td><td>I am / I'm</td><td>I'm not</td><td>Am I?</td></tr><tr><td>you / we / they</td><td>you are / you're</td><td>aren't / are not</td><td>Are you?</td></tr><tr><td>he / she / it</td><td>she is / she's</td><td>isn't / is not</td><td>Is she?</td></tr></table><p>In questions, the verb comes <b>before</b> the subject: <i>Are you a student?</i> In short answers, never shorten the positive: say <i>Yes, I am</i>, not <i>Yes, I'm</i>. Negative short answers can be short: <i>No, I'm not</i> or <i>No, she isn't</i>.</p>",
+ex:["I'm Shadn. I'm from Egypt.","She is a student at Alsun.","They aren't at home today.","Are you tired? – Yes, I am.","Is it cold in London? – No, it isn't."],
+mist:[["I student.","I am a student.","English needs a verb in every sentence."],["She are my friend.","She is my friend.","Use 'is' with he, she and it."],["Are you ready? – Yes, I'm.","Yes, I am.","A positive short answer is never contracted."]],
+ar:"في العربية لا نستخدم فعل الكون في المضارع (أنا طالبة)، لكن في الإنجليزية لازم نقول I am a student. لا تحذفي am / is / are أبداً.",
+prac:[["Complete: We ___ in the library.","are"],["Make negative: He is late.","He isn't late."],["Make a question: You are a teacher.","Are you a teacher?"]],
+real:"On your first day at university, a British classmate may ask: 'Hi, are you new here?' You can answer: 'Yes, I am. I'm Shadn. I'm from Cairo.'",
+sum:"Use am with I, is with he/she/it, are with you/we/they. Put the verb first in questions. Answer positively with the full form: Yes, I am.",
+vocab:[["student","طالبة"],["teacher","معلمة"],["tired","متعبة"],["ready","جاهزة"],["new","جديدة"]],
+exam:[["mc","She ___ from Cairo.",["am","is","are"],1,"With she, he and it we use 'is'."],
+["mc","___ you a student?",["Is","Am","Are"],2,"With you we use 'are', and the verb comes first in a question."],
+["tf","'I'm' is the short form of 'I am'.",true,"I'm = I + am."],
+["tx","Complete: They ___ at home. (be)",["are"],"With they we use 'are'."],
+["mc","Choose the correct negative: He ___ here.",["aren't","isn't","amn't"],1,"He + is not = isn't. 'Amn't' is not standard."],
+["tx","Correct this sentence: She are my friend.",["she is my friend"],"She takes 'is'."],
+["tx","Translate into English: أنا طالبة في الجامعة.",["i am a student at the university","i'm a student at the university","i am a university student","i'm a university student","i am a student at university","i'm a student at university"],"Add 'am': I am a student. Several wordings are correct."],
+["mc","'Are you tired?' – 'Yes, ___.'",["I'm","I am","I be"],1,"Positive short answers use the full form."]]},
+{id:"en-a1-art",title:"Articles: a, an and the",
+obj:["Choose a or an by the first sound","Use the for specific things","Use British patterns such as 'at university' and 'in hospital'"],
+body:"<p>We use <b>a</b> or <b>an</b> with one singular, countable thing when we mention it for the first time. We use <b>the</b> when both people know which thing we mean.</p><table><tr><th>Article</th><th>Use</th><th>Example</th></tr><tr><td>a</td><td>before a consonant <i>sound</i></td><td>a book, a university (sounds like 'you')</td></tr><tr><td>an</td><td>before a vowel <i>sound</i></td><td>an apple, an hour (the h is silent)</td></tr><tr><td>the</td><td>specific or already mentioned</td><td>I bought a book. The book is great.</td></tr><tr><td>no article</td><td>plural or uncountable in general</td><td>I like books. I like music.</td></tr></table><p><b>British note:</b> we often omit 'the' for institutions when we mean their main purpose: <i>She is at university</i>, <i>He is in hospital</i> (as a patient), <i>The children are at school</i>. Compare: <i>I met her at the university</i> (the building).</p>",
+ex:["I have a brother and an uncle.","She's an honest girl.","We live in a flat. The flat is small.","I like tea, but I don't like coffee.","He's in hospital after the accident."],
+mist:[["She is a honest girl.","She is an honest girl.","Honest begins with a vowel sound."],["I like the music.","I like music.","General likes need no article."],["She goes to the university every day.","She goes to university every day.","British English omits 'the' when it means studying."]],
+ar:"العربية فيها 'ال' التعريف فقط، أما الإنجليزية فلها a/an للنكرة وthe للمعرفة. انتبهي: a/an تعتمد على الصوت وليس على الحرف المكتوب.",
+prac:[["a or an: ___ umbrella","an"],["a or an: ___ European city","a"],["Complete: I bought a coat. ___ coat is red.","The"]],
+real:"When you describe your room to a new flatmate in Britain: 'I live in a flat near the station. It has an old kitchen.'",
+sum:"A/an introduce one thing; the points to a known thing; plurals and uncountables in general take no article. Choose a/an by sound. British English says at university and in hospital.",
+vocab:[["umbrella","مظلة"],["uncle","عم / خال"],["flat","شقة"],["honest","صادق"],["hour","ساعة"]],
+exam:[["mc","She is ___ honest girl.",["a","an","the"],1,"'Honest' starts with a vowel sound (the h is silent)."],
+["mc","He studies at ___ university in Cairo.",["a","an","the"],0,"'University' starts with a 'y' consonant sound."],
+["mc","I have a dog. ___ dog is brown.",["A","An","The"],2,"The dog is now known to both speakers."],
+["tf","In British English we say 'She is at university' for studying.",true,"We omit 'the' for the general purpose of the institution."],
+["tx","Complete: I wait for ___ hour. (a / an)",["an"],"The h in 'hour' is silent."],
+["tx","Correct: I like the music.",["i like music"],"General likes take no article."],
+["mc","Which is correct?",["He is in the hospital as a patient.","He is in hospital as a patient.","He is in a hospital as patient."],1,"British English: in hospital."]]},
+{id:"en-a1-brit",title:"British spelling and everyday vocabulary",
+obj:["Spell common words the British way","Know ten everyday British words","Recognise the main spelling patterns"],
+body:"<p>This course uses British English. The two big areas of difference are spelling and vocabulary.</p><table><tr><th>Pattern</th><th>British</th><th>American</th></tr><tr><td>-our / -or</td><td>colour, favourite</td><td>color, favorite</td></tr><tr><td>-re / -er</td><td>centre, theatre</td><td>center, theater</td></tr><tr><td>-ise / -ize</td><td>organise, realise</td><td>organize, realize</td></tr></table><table><tr><th>British</th><th>American</th><th>Arabic</th></tr><tr><td>flat</td><td>apartment</td><td>شقة</td></tr><tr><td>lift</td><td>elevator</td><td>مصعد</td></tr><tr><td>biscuit</td><td>cookie</td><td>بسكويت</td></tr><tr><td>autumn</td><td>fall</td><td>الخريف</td></tr><tr><td>holiday</td><td>vacation</td><td>إجازة</td></tr><tr><td>football</td><td>soccer</td><td>كرة القدم</td></tr></table>",
+ex:["My favourite colour is blue.","The lift is next to the centre of the building.","We organise a holiday every autumn.","Would you like a biscuit with your tea?"],
+mist:[["color","colour","British spelling keeps the u."],["center","centre","British spelling ends -re."],["elevator","lift","British word for the machine that carries people between floors."]],
+ar:"الفرق بين البريطاني والأمريكي في الغالب في الإملاء وبعض المفردات؛ النحو واحد تقريباً. اختاري نمطاً واحداً والتزمي به في كتابتك.",
+prac:[["Write the British spelling: neighbor","neighbour"],["Write the British word: apartment","flat"],["Write the British spelling: realize","realise"]],
+real:"In a British café you may hear: 'Would you like a biscuit with your tea?' In a block of flats you press the button for the lift.",
+sum:"British spelling uses -our, -re and often -ise. Learn the everyday pairs: flat/apartment, lift/elevator, biscuit/cookie, autumn/fall, holiday/vacation, football/soccer.",
+vocab:[["colour","لون"],["centre","مركز"],["organise","ينظّم"],["lift","مصعد"],["autumn","الخريف"]],
+exam:[["mc","Choose the British spelling.",["color","colour","colur"],1,"British English keeps the u in -our words."],
+["mc","Choose the British spelling.",["center","centre","centr"],1,"British English uses -re in centre and theatre."],
+["tf","'Autumn' is the usual British word for 'fall'.",true,"Fall is the American word."],
+["tx","Write the British spelling of 'organize'.",["organise"],"British English prefers -ise."],
+["tx","Write the British word for 'apartment'.",["flat"],"A flat is a British apartment."],
+["mc","In a tall building in Britain, you take the ___.",["elevator","lift","stairway only"],1,"Lift is the British word."],
+["tx","Write the British word for 'cookie'.",["biscuit"],"In Britain a biscuit is a cookie."]]}
+]}]}]};
+
+</script>
+<script>
+window.COURSE=window.COURSE||{};
+COURSE.german={title:"Deutsch",levels:[{id:"A1",units:[{id:"deu1",title:"Unit 1: First steps in German",lessons:[
+{id:"de-a1-abc",title:"The alphabet and key sounds",
+obj:["Say the German letters and the extra letters ä, ö, ü and ß","Read the main spelling-sound rules","Pronounce ei, ie, eu, sp, st, w and z correctly"],
+body:"<p>German has the same 26 letters as English plus <b>ä, ö, ü</b> and <b>ß</b>. German spelling is much more regular than English: once you know the rules, you can read almost any word aloud.</p><table><tr><th>Spelling</th><th>Sound</th><th>Example</th></tr><tr><td>ei</td><td>like English 'eye'</td><td>nein, Eis</td></tr><tr><td>ie</td><td>long 'ee'</td><td>Bier, Liebe</td></tr><tr><td>eu / äu</td><td>like 'oy'</td><td>neu, Häuser</td></tr><tr><td>w</td><td>like English v</td><td>Wasser</td></tr><tr><td>v</td><td>usually like f</td><td>Vater</td></tr><tr><td>z</td><td>ts</td><td>Zeit</td></tr><tr><td>sp / st at the start</td><td>schp / scht</td><td>sprechen, Straße</td></tr><tr><td>ß</td><td>sharp s (written ss in Switzerland and in capitals)</td><td>Straße</td></tr></table><p>The letter <b>ch</b> has two sounds: soft after e, i, ä, ö, ü (ich) and hard after a, o, u (Nacht). At the end of a word, b, d and g sound like p, t and k: <i>Tag</i> sounds like 'tahk'.</p>",
+ex:["Eis (ice cream) – Bier (beer)","Wasser (water) – Vater (father)","Zeit (time) – Zimmer (room)","Sprechen Sie Deutsch?","Das ist eine Straße."],
+mist:[["Saying 'ie' as 'eye'","ie = long 'ee'","ei is 'eye', ie is 'ee': remember the second letter."],["Saying w as English w","w = v","Wasser sounds like 'vasser'."],["Saying z as English z","z = ts","Zeit sounds like 'tsite'."]],
+ar:"ترتيب الحروف في ei وie هو سر التفرقة: الحرف الثاني هو الذي ينطق (ei = آي، ie = ي طويلة). والحرف z في الألمانية ينطق تس، وw ينطق ڤ.",
+prac:[["Read aloud: Wein, Bier, Eis","vyne, beer, ice"],["Which sound: Nacht or ich is soft?","ich"],["Write Straße with ss","Strasse"]],
+real:"When you give your name or spell an address in Germany, people ask you to spell: 'Wie schreibt man das?' Knowing the letter names makes this easy.",
+sum:"German adds ä ö ü ß. Learn ei = eye, ie = ee, eu = oy, w = v, z = ts, sp/st = schp/scht. Final b, d, g sound like p, t, k.",
+vocab:[["Wasser","ماء"],["Straße","شارع"],["Zeit","وقت"],["Eis","آيس كريم / ثلج"],["Bier","بيرة"]],
+exam:[["mc","The 'ie' in 'Bier' sounds like:",["eye","a long 'ee'","'oy'"],1,"ie is pronounced as a long ee."],
+["mc","German 'w' sounds like English:",["w","v","f"],1,"Wasser sounds like 'vasser'."],
+["tf","German 'z' is pronounced 'ts'.",true,"Zeit = tsite."],
+["mc","'sp' at the start of a word, as in 'sprechen', sounds like:",["sp","schp","zp"],1,"At the start of a word sp is pronounced schp."],
+["mc","The 'ei' in 'nein' sounds like:",["ee","eye","ay"],1,"ei is like English 'eye'."],
+["tx","Write 'Straße' using ss instead of ß.",["strasse"],"ß is written ss when it is not available (for example in Switzerland)."],
+["tx","Write the German word for 'ice cream'. (It starts with E and has 3 letters.)",["eis"],"Eis = ice cream."],
+["mc","Which word has a soft 'ch'?",["Nacht","ich","Buch"],1,"ch is soft after i."]]},
+{id:"de-a1-greet",title:"Greetings and introducing yourself",
+obj:["Greet people at different times of day","Introduce yourself with heißen, kommen and sein","Choose between du and Sie"],
+body:"<p><b>Greetings:</b> Hallo (informal), Guten Morgen (morning), Guten Tag (daytime), Guten Abend (evening), Tschüss (informal goodbye), Auf Wiedersehen (formal goodbye).</p><p><b>Introductions:</b> Ich heiße Shadn. / Mein Name ist Shadn. – Wie heißt du? – Woher kommst du? – Ich komme aus Ägypten.</p><table><tr><th></th><th>heißen</th><th>kommen</th><th>sein</th></tr><tr><td>ich</td><td>heiße</td><td>komme</td><td>bin</td></tr><tr><td>du</td><td>heißt</td><td>kommst</td><td>bist</td></tr><tr><td>er / sie / es</td><td>heißt</td><td>kommt</td><td>ist</td></tr><tr><td>wir</td><td>heißen</td><td>kommen</td><td>sind</td></tr><tr><td>ihr</td><td>heißt</td><td>kommt</td><td>seid</td></tr><tr><td>sie / Sie</td><td>heißen</td><td>kommen</td><td>sind</td></tr></table><p><b>du or Sie?</b> Use <i>du</i> with friends, family and children. Use <i>Sie</i> (always with a capital S) with strangers, teachers and in formal situations: <i>Wie heißen Sie? Wie geht es Ihnen?</i></p>",
+ex:["Guten Morgen! Wie geht's? – Danke, gut.","Ich heiße Shadn und ich komme aus Ägypten.","Woher kommen Sie? – Ich komme aus Kairo.","Er ist Student.","Wir sind Freunde."],
+mist:[["Ich bin heiße Shadn.","Ich heiße Shadn.","heißen already means 'to be called'."],["Wie heißt Sie?","Wie heißen Sie?","Sie takes the plural form of the verb."],["Guten Tag at night","Guten Abend","Use Abend in the evening."]],
+ar:"في الألمانية الفعل يتغير حسب الضمير: ich heiße لكن du heißt. وSie (بحرف كبير) هو صيغة الاحترام ويأخذ نفس تصريف sie للجمع.",
+prac:[["Complete: Wie ___ du? (heißen)","heißt"],["Complete: Woher ___ Sie? (kommen)","kommen"],["Say in German: My name is Anna.","Ich heiße Anna. / Mein Name ist Anna."]],
+real:"At a German university office you say: 'Guten Tag, ich heiße Shadn. Ich komme aus Ägypten.' Use Sie with the staff.",
+sum:"Learn the greetings by time of day. Conjugate heißen, kommen, sein for each pronoun. Use du with friends and Sie in formal situations.",
+vocab:[["Guten Morgen","صباح الخير"],["Auf Wiedersehen","مع السلامة"],["Danke","شكراً"],["Woher","من أين"],["der Student","طالب"]],
+exam:[["mc","Wie ___ du?",["heiße","heißt","heißen"],1,"du takes -st (heißt, because the stem ends in ß)."],
+["mc","Wie geht es ___? (formal)",["dir","Ihnen","euch"],1,"The formal dative of Sie is Ihnen."],
+["mc","Ich ___ aus Kairo.",["komme","kommst","kommt"],0,"ich takes -e."],
+["tf","'Guten Tag' is the normal greeting in the evening.",false,"In the evening we say Guten Abend."],
+["tx","Complete: Ich ___ Shadn. (heißen)",["heiße"],"ich heiße."],
+["tx","Translate into German: My name is Anna.",["mein name ist anna","ich heiße anna"],"Both forms are correct."],
+["mc","Er ___ Student.",["bin","ist","sind"],1,"er takes ist."],
+["mc","Which pronoun do you use with your teacher?",["du","ihr","Sie"],2,"Use the formal Sie."]]},
+{id:"de-a1-gender",title:"Nouns, gender and articles (der, die, das)",
+obj:["Use der, die and das with the right noun","Use the indefinite articles ein and eine","Learn patterns that predict gender"],
+body:"<p>Every German noun has a <b>gender</b>: masculine (der), feminine (die) or neuter (das). The plural article is always <b>die</b>. Nouns are always written with a capital letter.</p><table><tr><th></th><th>masculine</th><th>feminine</th><th>neuter</th><th>plural</th></tr><tr><td>the</td><td>der Tisch</td><td>die Lampe</td><td>das Buch</td><td>die Bücher</td></tr><tr><td>a / an</td><td>ein Tisch</td><td>eine Lampe</td><td>ein Buch</td><td>– (no article)</td></tr></table><p><b>Helpful patterns:</b> nouns ending in -ung, -heit, -keit, -schaft, -ion are feminine (die Zeitung, die Universität). Nouns ending in -chen and -lein are neuter (das Mädchen). Days, months and seasons are masculine (der Montag, der Sommer). Always learn a noun <b>with its article</b>.</p>",
+ex:["der Mann, die Frau, das Kind","die Zeitung, die Freiheit, die Nation","das Mädchen, das Brötchen","der Montag, der Winter","Ich habe ein Buch und eine Tasche."],
+mist:[["die Mädchen (singular)","das Mädchen","-chen nouns are always neuter, even for girls."],["ein Frau","eine Frau","Feminine nouns take eine."],["learning 'Tisch' alone","learn 'der Tisch'","A noun without its article is incomplete."]],
+ar:"في العربية الجنس مذكر ومؤنث فقط، أما الألمانية ففيها ثلاثة أجناس. لا تحاولي تخميناً من المعنى، فكلمة Mädchen (فتاة) محايدة. احفظي الكلمة دائماً مع أداتها.",
+prac:[["Add the article: ___ Universität","die"],["Add the article: ___ Brötchen","das"],["Add ein or eine: ___ Lampe","eine"]],
+real:"In a shop you might say: 'Ich möchte ein Brötchen und eine Zeitung, bitte.' The right article makes you sound natural.",
+sum:"Three genders: der, die, das; plural always die. Use ein for masculine and neuter, eine for feminine. Use suffix patterns to guess, and always learn nouns with their article.",
+vocab:[["der Tisch","طاولة"],["die Lampe","مصباح"],["das Buch","كتاب"],["das Mädchen","فتاة"],["die Zeitung","جريدة"]],
+exam:[["mc","___ Universität",["der","die","das"],1,"Nouns ending in -ität are feminine."],
+["mc","___ Mädchen",["der","die","das"],2,"-chen nouns are neuter."],
+["tf","Nouns ending in -ung are feminine.",true,"die Zeitung, die Wohnung."],
+["tx","Write the article: ___ Buch",["das"],"Buch is neuter."],
+["mc","Choose the correct form: ___ Frau",["ein","eine","einen"],1,"Feminine nouns take eine."],
+["tx","What is the plural article of 'der Tisch'?",["die"],"The plural article is always die."],
+["mc","'Montag' is:",["der Montag","die Montag","das Montag"],0,"Days of the week are masculine."],
+["tx","Write the article for 'Brötchen'.",["das"],"-chen nouns are neuter."]]}
+]}]}]};
+
+</script>
+<script>
+(function(){
+var H=Hub,L=H.L,q=function(i){return document.getElementById(i)};
+var E,Es={},cur='english';function sel(k){cur=k;E=Es[k]=Es[k]||{mode:'list',lid:null,res:null}}sel('english');
+function norm(s){return String(s).toLowerCase().replace(/[’‘]/g,"'").replace(/[.,!?؟]/g,'').replace(/\s+/g,' ').trim()}
+function conv(a){return a[0]==='mc'?{t:'mc',q:a[1],o:a[2],a:a[3],e:a[4]}:a[0]==='tf'?{t:'tf',q:a[1],a:a[2],e:a[3]}:{t:'tx',q:a[1],a:a[2],e:a[3]}}
+function flat(){var f=[];COURSE[cur].levels.forEach(function(l){l.units.forEach(function(u){u.lessons.forEach(function(x){f.push(x)})})});return f}
+function open(i,f){return i===0||H.S.lessonsDone.indexOf(f[i-1].id)>-1}
+function qhtml(q,i){var n='q'+i,h='<div class="card"><b>'+(i+1)+'. '+H.esc(q.q)+'</b><br>';
+ if(q.t==='mc')h+=q.o.map(function(o,k){return '<label><input type="radio" name="'+n+'" value="'+k+'"> '+H.esc(o)+'</label><br>'}).join('');
+ else if(q.t==='tf')h+=['true','false'].map(function(v){return '<label><input type="radio" name="'+n+'" value="'+v+'"> '+(v==='true'?L('True','صح'):L('False','خطأ'))+'</label><br>'}).join('');
+ else h+='<input name="'+n+'" autocomplete="off" style="width:100%">';return h+'</div><br>'}
+function grade(qs){return qs.map(function(x,i){var el=document.getElementsByName('q'+i),v='',sel='',ans,ok=false;
+ if(x.t==='tx'){v=el[0].value;sel=v;ans=x.a[0];ok=x.a.some(function(a){return norm(a)===norm(v)})}
+ else{[].forEach.call(el,function(r){if(r.checked)v=r.value});
+  if(x.t==='mc'){sel=v===''?'':x.o[v];ans=x.o[x.a];ok=v!==''&&+v===x.a}else{sel=v;ans=String(x.a);ok=v!==''&&(v==='true')===x.a}}
+ return {q:x,ok:ok,sel:sel,ans:ans}})}
+function show(rs){return rs.map(function(r,i){return '<div class="card"><b>'+(r.ok?'✓ ':'✗ ')+(i+1)+'. '+H.esc(r.q.q)+'</b><br>'+(r.ok?'':'<span class="msg">'+L('Your answer: ','إجابتك: ')+H.esc(r.sel||'—')+'</span><br>')+'<span class="msg">'+L('Correct answer: ','الإجابة الصحيحة: ')+H.esc(r.ans)+'</span><br>'+H.esc(r.q.e||'')+'</div><br>'}).join('')}
+function record(rs,name){var S=H.S;rs.forEach(function(r){if(!r.ok&&!S.mistakes.some(function(m){return m.q.q===r.q.q&&m.lesson===name}))S.mistakes.push({id:Date.now()+Math.random(),q:r.q,sel:r.sel,lesson:name,d:H.ds(new Date())})})}
+function lesson(x){var S=H.S,tries=S.attempts.filter(function(a){return a.lesson===x.id});
+ return '<button class="ghost small" id="bk">‹ '+L('Back','رجوع')+'</button><h1>'+H.esc(x.title)+'</h1><div class="card"><h2>'+L('Objectives','الأهداف')+'</h2><ul>'+x.obj.map(function(o){return '<li>'+o+'</li>'}).join('')+'</ul></div><br>'+
+ '<div class="card">'+x.body+'</div><br><div class="card"><h2>'+L('Examples','أمثلة')+'</h2><ul>'+x.ex.map(function(o){return '<li>'+o+'</li>'}).join('')+'</ul></div><br>'+
+ '<div class="card"><h2>'+L('Common mistakes','أخطاء شائعة')+'</h2>'+x.mist.map(function(m){return '<p>✗ <s>'+m[0]+'</s><br>✓ <b>'+m[1]+'</b><br><span class="msg">'+m[2]+'</span></p>'}).join('')+'</div><br>'+
+ '<div class="card"><h2>'+L('Note in Arabic','ملاحظة بالعربية')+'</h2><p dir="rtl">'+x.ar+'</p></div><br>'+
+ '<div class="card"><h2>'+L('Practice','تدريب')+'</h2>'+x.prac.map(function(p){return '<details><summary>'+p[0]+'</summary><p><b>'+p[1]+'</b></p></details>'}).join('')+'</div><br>'+
+ '<div class="card"><h2>'+L('In real life','في الحياة الواقعية')+'</h2><p>'+x.real+'</p></div><br><div class="card"><h2>'+L('Summary','الخلاصة')+'</h2><p>'+x.sum+'</p></div><br>'+
+ '<div class="card"><h2>'+L('Key vocabulary','مفردات أساسية')+'</h2>'+x.vocab.map(function(v){return '<div class="item"><span>'+v[0]+' — '+v[1]+'</span><button class="ghost small" data-sv="'+v[0]+'|'+v[1]+'">+ '+L('Save','حفظ')+'</button><button class="ghost small" data-sp="'+v[0]+'">🔊</button></div>'}).join('')+'<div class="msg" id="vm"></div></div><br>'+
+ (tries.length?'<div class="card"><h2>'+L('Attempts','المحاولات')+'</h2>'+tries.map(function(a){return '<div>'+a.d+' — '+a.pct+'% '+(a.pct>=80?'✓':'')+'</div>'}).join('')+'</div><br>':'')+
+ '<button id="ex">'+(tries.length?L('Retake exam','أعيدي الاختبار'):L('Start exam','ابدئي الاختبار'))+'</button>'}
+function quizPage(title,qs,btn,back){return '<button class="ghost small" id="bk">‹ '+L('Back','رجوع')+'</button><h1>'+H.esc(title)+'</h1><p class="msg">'+L('Pass mark: 80%','درجة النجاح: 80%')+'</p>'+qs.map(qhtml).join('')+'<button id="'+btn+'">'+L('Submit answers','سلّمي الإجابات')+'</button>'}
+var base={html:function(){var f=flat(),S=H.S;
+ if(E.mode==='lesson')return lesson(f.filter(function(x){return x.id===E.lid})[0]);
+ if(E.mode==='exam'){var x=f.filter(function(x){return x.id===E.lid})[0];return quizPage(x.title+' — '+L('Exam','اختبار'),x.exam.map(conv),'sub')}
+ if(E.mode==='result'){var x=f.filter(function(x){return x.id===E.lid})[0],r=E.res,n=r.filter(function(a){return a.ok}).length,p=Math.round(n/r.length*100);
+  return '<h1>'+p+'% ('+n+'/'+r.length+')</h1><div class="card"><b>'+(p>=80?L('Passed. The next lesson is unlocked.','نجحتِ. تم فتح الدرس التالي.'):L('Not passed yet. Review the lesson and try again.','لم تنجحي بعد. راجعي الدرس وأعيدي المحاولة.'))+'</b></div><br>'+show(r)+'<div class="row"><button id="again">'+L('Retake','أعيدي')+'</button><button class="ghost" id="bk">'+L('Back to lesson','العودة للدرس')+'</button></div>'}
+ var h='<h1>'+H.t(cur)+'</h1><p class="msg">A1 · '+f.length+' '+L('lessons so far. More are added in later updates.','دروس حالياً، وتُضاف دروس أخرى لاحقاً.')+'</p>';
+ COURSE[cur].levels.forEach(function(l){l.units.forEach(function(u){h+='<div class="card"><h2>'+l.id+' — '+H.esc(u.title)+'</h2>'+u.lessons.map(function(x){var i=f.indexOf(x),o=open(i,f),d=S.lessonsDone.indexOf(x.id)>-1;
+  return '<div class="item"><span>'+(d?'✓ ':o?'':'🔒 ')+H.esc(x.title)+'</span><button class="'+(o?'':'ghost ')+'small" data-l="'+x.id+'"'+(o?'':' disabled')+'>'+(o?L('Open','فتح'):L('Locked','مقفل'))+'</button></div>'}).join('')+'</div><br>'})});return h},
+ bind:function(){var f=flat(),S=H.S;function on(i,fn){var e=q(i);if(e)e.onclick=fn}
+ [].forEach.call(document.querySelectorAll('[data-l]'),function(b){b.onclick=function(){E.mode='lesson';E.lid=b.dataset.l;H.render();scrollTo(0,0)}});
+ [].forEach.call(document.querySelectorAll('[data-sp]'),function(b){b.onclick=function(){q('vm').textContent=H.speak(b.dataset.sp,cur==='german'?'de':'gb')}});
+ [].forEach.call(document.querySelectorAll('[data-sv]'),function(b){b.onclick=function(){var p=b.dataset.sv.split('|');if(!S.vocab.some(function(w){return w.word===p[0]}))S.vocab.push({id:Date.now(),word:p[0],lang:cur==='german'?'de':'en',ar:p[1],ipa:'',tr:'',def:'',ex:'',syn:'',ant:'',fam:'',pos:'',level:'A1',cat:'',fav:false,hard:false,box:0,due:H.ds(new Date())});H.save();H.toast(L('Saved','تم الحفظ'))}});
+ on('bk',function(){E.mode=E.mode==='result'?'lesson':E.mode==='exam'?'lesson':'list';H.render();scrollTo(0,0)});
+ on('ex',function(){E.mode='exam';H.render();scrollTo(0,0)});on('again',function(){E.mode='exam';H.render();scrollTo(0,0)});
+ on('sub',function(){var x=f.filter(function(x){return x.id===E.lid})[0],rs=grade(x.exam.map(conv)),n=rs.filter(function(a){return a.ok}).length,p=Math.round(n/rs.length*100);
+  S.attempts.push({lesson:x.id,pct:p,d:H.ds(new Date())});S.exams.push({id:x.id,score:p,d:H.ds(new Date())});
+  if(p>=80&&S.lessonsDone.indexOf(x.id)<0)S.lessonsDone.push(x.id);record(rs,x.title);H.save();E.res=rs;E.mode='result';H.render();scrollTo(0,0)})}};
+H.mods.english={html:function(){sel('english');return base.html()},bind:function(){sel('english');base.bind()}};
+H.mods.german={html:function(){sel('german');return base.html()},bind:function(){sel('german');base.bind()}};
+var M={on:false};
+H.mods.mistakes={html:function(){var S=H.S;
+ if(M.on)return quizPage(L('Practise your mistakes','تدرّبي على أخطائك'),S.mistakes.map(function(m){return m.q}),'msub');
+ if(M.res)return '<h1>'+M.res.filter(function(r){return r.ok}).length+' / '+M.res.length+'</h1>'+show(M.res)+'<button id="mdone">'+L('Done','تم')+'</button>';
+ return '<h1>'+H.t('mistakes')+'</h1>'+(S.mistakes.length?'<button id="mp">'+L('Practise all','تدرّبي على الكل')+' ('+S.mistakes.length+')</button><br><br>'+S.mistakes.map(function(m){return '<div class="card"><b>'+H.esc(m.q.q)+'</b><br><span class="msg">'+L('You answered: ','أجبتِ: ')+H.esc(m.sel||'—')+' · '+m.d+' · '+H.esc(m.lesson)+'</span><br>'+L('Correct: ','الصحيح: ')+H.esc(m.q.t==='mc'?m.q.o[m.q.a]:m.q.t==='tx'?m.q.a[0]:String(m.q.a))+'<br>'+H.esc(m.q.e||'')+'</div><br>'}).join(''):'<div class="card soon"><p>'+L('No mistakes yet. Wrong exam answers are saved here automatically.','لا أخطاء بعد. تُحفظ الإجابات الخاطئة هنا تلقائياً.')+'</p></div>')},
+ bind:function(){var S=H.S;function on(i,fn){var e=q(i);if(e)e.onclick=fn}
+ on('mp',function(){M.on=true;M.res=null;H.render()});on('bk',function(){M.on=false;H.render()});on('mdone',function(){M.res=null;H.render()});
+ on('msub',function(){var rs=grade(S.mistakes.map(function(m){return m.q}));S.mistakes=S.mistakes.filter(function(m,i){return !rs[i].ok});H.save();M.on=false;M.res=rs;H.render()})}};
+H.quiz={qhtml:qhtml,grade:grade,show:show,conv:conv,norm:norm};
+H.open=function(k,id){sel(k);E.mode='lesson';E.lid=id;if(location.hash==='#'+k)H.render();else location.hash='#'+k};
+})();
+
+</script>
+<script>
+(function(){
+var H=Hub,L=H.L,q=function(i){return document.getElementById(i)},Q=function(){return H.quiz};
+function on(i,f){var e=q(i);if(e)e.onclick=f}
+function each(sel,f){[].forEach.call(document.querySelectorAll(sel),f)}
+/* ---------- Pronunciation lab ---------- */
+var PR={en:[['sheep /ʃiːp/ – ship /ʃɪp/','Minimal pair: long /iː/ and short /ɪ/'],['full /fʊl/ – fool /fuːl/','Minimal pair: /ʊ/ and /uː/'],['bad /bæd/ – bed /bed/','Minimal pair: /æ/ and /e/'],['cat /kæt/ – cut /kʌt/','Minimal pair: /æ/ and /ʌ/'],['bath','British /bɑːθ/, American /bæθ/'],['tomato','British /təˈmɑːtəʊ/, American /təˈmeɪtoʊ/'],['schedule','British /ˈʃedjuːl/, American /ˈskedʒuːl/'],["can't",'British /kɑːnt/, American /kænt/'],['photograph','Stress on the first syllable: /ˈfəʊtəɡrɑːf/'],['photography','Stress on the second syllable: /fəˈtɒɡrəfi/']],
+ de:[['Straße','/ˈʃtʁaːsə/ — ß sounds like s; st at the start of a word sounds like scht'],['schön','/ʃøːn/ — ö is a rounded vowel'],['Bücher','/ˈbyːçɐ/ — ü is a rounded vowel; ch after ü is soft'],['Mädchen','/ˈmɛːtçən/ — ä sounds like long e'],['ich','/ɪç/ — soft ch'],['Nacht','/naxt/ — hard ch after a, o, u'],['Zeit','/tsaɪt/ — z sounds like ts'],['Wasser','/ˈvasɐ/ — w sounds like v'],['Vogel','/ˈfoːɡl̩/ — v often sounds like f']]};
+H.mods.pron={html:function(){
+ function rows(l,a){return PR[l].map(function(r,i){return '<div class="item"><span><b>'+H.esc(r[0])+'</b><br><span class="msg">'+H.esc(r[1])+'</span></span><span class="row">'+a.map(function(x){return '<button class="ghost small" data-l="'+l+'" data-i="'+i+'" data-a="'+x[0]+'">🔊 '+x[1]+'</button>'}).join('')+'</span></div>'}).join('')}
+ return '<h1>'+H.t('pron')+'</h1><p class="msg">'+L('Tap to listen, then repeat out loud. Only voices found on your device will play.','اضغطي للاستماع ثم كرري بصوت عالٍ. تعمل فقط الأصوات الموجودة على جهازك.')+'</p><div class="card"><h2>English</h2>'+rows('en',[['gb','British'],['us','American']])+'</div><br><div class="card"><h2>Deutsch</h2>'+rows('de',[['de','German']])+'</div><div class="msg" id="vm"></div>'},
+ bind:function(){each('[data-a]',function(b){b.onclick=function(){var r=PR[b.dataset.l][b.dataset.i],w=r[0].split(' ')[0].split('–')[0];
+  var txt=r[0].indexOf('–')>-1?r[0].replace(/\/[^/]*\//g,'').replace('–',',').replace(/\s+/g,' '):w;q('vm').textContent=H.speak(txt,b.dataset.a)}})}};
+/* ---------- Translation practice ---------- */
+var RUB=['Accuracy of meaning (40)','Natural wording (30)','Grammar and spelling (20)','Register and style (10)'];
+var TP=[
+{id:'t1',d:'ar→en',k:'Sentence',s:'أحب القراءة في المكتبة.',m:'I like reading in the library.',a:['i like reading in the library','i love reading in the library','i like to read in the library','i enjoy reading in the library']},
+{id:'t2',d:'ar→en',k:'Academic',s:'تدرس الطالبة اللغويات في الجامعة.',m:'The student studies linguistics at university.',a:['the student studies linguistics at university','the student studies linguistics at the university','the student is studying linguistics at university','the female student studies linguistics at university']},
+{id:'t3',d:'ar→en',k:'Technical',s:'يرجى إغلاق الجهاز قبل تنظيفه.',m:'Please switch off the device before cleaning it.',a:['please switch off the device before cleaning it','please turn off the device before cleaning it','please switch the device off before cleaning it','please turn the device off before cleaning it']},
+{id:'t4',d:'ar→de',k:'Sentence',s:'أنا أتعلم اللغة الألمانية.',m:'Ich lerne Deutsch.',a:['ich lerne deutsch','ich lerne die deutsche sprache','ich lerne gerade deutsch']},
+{id:'t5',d:'en→ar',k:'Sentence',s:'The library opens at nine o’clock.',m:'تفتح المكتبة أبوابها في التاسعة.'},
+{id:'t6',d:'en→ar',k:'Literary',s:'The sea was calm and the sky was full of stars.',m:'كان البحر هادئاً وكانت السماء مليئة بالنجوم.'},
+{id:'t7',d:'de→ar',k:'Sentence',s:'Ich wohne in Kairo.',m:'أسكن في القاهرة.'}];
+var tpS={};
+H.mods.tprac={html:function(){H.S.tprac=H.S.tprac||{};
+ return '<h1>'+H.t('tprac')+'</h1><p class="msg">'+L('Where several translations are correct, any accepted version counts. Other items show a model answer and you rate yourself with the rubric.','عندما توجد ترجمات صحيحة عدة تُقبل كل الصيغ المعتمدة. باقي التمارين تعرض إجابة نموذجية وتقيّمين نفسك بالمعيار.')+'</p>'+
+ TP.map(function(x){var done=H.S.tprac[x.id],r=tpS[x.id];return '<div class="card"><span class="chip">'+x.d+' · '+x.k+'</span> '+(done?'✓':'')+'<p dir="auto"><b>'+H.esc(x.s)+'</b></p><textarea id="in_'+x.id+'" dir="auto" style="min-height:60px"></textarea><div class="row"><button class="small" data-c="'+x.id+'">'+(x.a?L('Check','تحقق'):L('Show model answer','أظهر النموذج'))+'</button></div>'+
+ (r?'<div class="msg" dir="auto">'+(r.ok===true?'✓ '+L('Accepted','مقبول'):r.ok===false?'✗ '+L('Not an accepted version.','ليست صيغة معتمدة.'):'')+'</div><p dir="auto"><b>'+L('Model: ','النموذج: ')+'</b>'+H.esc(x.m)+'</p>'+(x.a?'':'<div class="row"><button class="small" data-g="'+x.id+'">'+L('I matched the meaning','طابقت المعنى')+'</button></div>')+'<details><summary>'+L('Rubric (100)','معيار التقييم (100)')+'</summary><ul>'+RUB.map(function(z){return '<li>'+z+'</li>'}).join('')+'</ul></details>':'')+'</div><br>'}).join('')},
+ bind:function(){each('[data-c]',function(b){b.onclick=function(){var x=TP.filter(function(t){return t.id===b.dataset.c})[0],v=q('in_'+x.id).value,ok=null;
+  if(x.a){ok=x.a.map(Q().norm).indexOf(Q().norm(v))>-1;if(ok){H.S.tprac[x.id]=true;H.save()}}tpS[x.id]={ok:ok};H.render()}});
+ each('[data-g]',function(b){b.onclick=function(){H.S.tprac[b.dataset.g]=true;H.save();H.render()}})}};
+/* ---------- Reading and listening library ---------- */
+var LIB=[
+{id:'r1',lang:'en',lvl:'A1',topic:'Daily life',min:5,acc:'gb',title:'A day in Manchester',text:'Tom lives in Manchester. He is a student at the university. Every morning he takes the bus to the city centre. At lunchtime he has a sandwich and a cup of tea in the canteen. In the evening he goes home by bus and watches football on television.',vocab:[['canteen','مطعم الجامعة'],['city centre','وسط المدينة'],['lunchtime','وقت الغداء']],
+ q:[['mc','Where does Tom live?',['London','Manchester','Oxford'],1,'The first sentence says Manchester.'],['tf','Tom goes to the university by car.',false,'He takes the bus.'],['mc','What does he have at lunchtime?',['a sandwich and tea','pasta and juice','only coffee'],0,'Sandwich and a cup of tea.'],['tx','Where does he watch football?',['on television','on tv','at home'],'He watches football on television.']],dict:'Every morning he takes the bus to the city centre.'},
+{id:'r2',lang:'de',lvl:'A1',topic:'Alltag',min:5,acc:'de',title:'Annas Tag',text:'Anna wohnt in Berlin. Sie ist Studentin. Jeden Morgen fährt sie mit dem Fahrrad zur Universität. Mittags isst sie einen Salat in der Mensa. Am Abend liest sie ein Buch.',vocab:[['die Mensa','مطعم الجامعة'],['das Fahrrad','الدراجة'],['mittags','وقت الظهر']],
+ q:[['mc','Wo wohnt Anna?',['Berlin','Hamburg','München'],0,'Anna wohnt in Berlin.'],['tf','Anna fährt mit dem Bus zur Universität.',false,'Sie fährt mit dem Fahrrad.'],['mc','Was isst sie mittags?',['eine Pizza','einen Salat','ein Brot'],1,'Sie isst einen Salat.'],['tx','Was liest sie am Abend?',['ein buch','ein buch.'],'Am Abend liest sie ein Buch.']],dict:'Jeden Morgen fährt sie mit dem Fahrrad zur Universität.'}];
+var LB={id:null,mode:'',res:null,dres:null};
+H.mods.library={html:function(){
+ var x=LIB.filter(function(i){return i.id===LB.id})[0];
+ if(!x)return '<h1>'+H.t('library')+'</h1><p class="msg">'+L('Original texts written for this app. More will be added.','نصوص أصلية كتبت لهذا التطبيق. ستضاف نصوص أخرى.')+'</p>'+LIB.map(function(i){return '<div class="card"><b>'+H.esc(i.title)+'</b> <span class="chip">'+i.lang.toUpperCase()+' '+i.lvl+'</span><br><span class="msg">'+i.topic+' · ~'+i.min+' '+L('min','د')+'</span><br><br><button class="small" data-o="'+i.id+'">'+L('Open','فتح')+'</button></div><br>'}).join('');
+ return '<button class="ghost small" id="lb">‹ '+L('Back','رجوع')+'</button><h1>'+H.esc(x.title)+'</h1><div class="card"><p dir="auto" style="font-size:1.1rem">'+H.esc(x.text)+'</p><div class="row"><button class="ghost small" id="ls">🔊 '+L('Listen','استمعي')+'</button><button class="ghost small" id="lx">■</button></div><div class="msg" id="vm"></div>'+
+ '<p class="msg">'+x.vocab.map(function(v){return H.esc(v[0])+' = '+v[1]}).join(' · ')+'</p></div><br><h2>'+L('Comprehension','الفهم')+'</h2>'+(LB.res?Q().show(LB.res)+'<button id="lr">'+L('Try again','مرة أخرى')+'</button>':x.q.map(Q().conv).map(Q().qhtml).join('')+'<button id="lq">'+L('Check answers','تحقق من الإجابات')+'</button>')+
+ '<br><br><div class="card"><h2>'+L('Dictation','إملاء')+'</h2><p class="msg">'+L('Listen and type what you hear.','استمعي واكتبي ما تسمعين.')+'</p><button class="ghost small" id="ds">🔊</button><input id="dt" style="width:100%" autocomplete="off"><br><br><button class="small" id="dc">'+L('Check','تحقق')+'</button><div class="msg" id="dm">'+(LB.dres===null?'':LB.dres?'✓':'✗ '+H.esc(x.dict))+'</div></div>'},
+ bind:function(){var x=LIB.filter(function(i){return i.id===LB.id})[0];
+ each('[data-o]',function(b){b.onclick=function(){LB.id=b.dataset.o;LB.res=null;LB.dres=null;H.render()}});
+ on('lb',function(){LB.id=null;H.render()});if(!x)return;
+ on('ls',function(){q('vm').textContent=H.speak(x.text,x.acc)});on('lx',function(){speechSynthesis.cancel()});
+ on('ds',function(){q('dm').textContent=H.speak(x.dict,x.acc)});
+ on('dc',function(){LB.dres=Q().norm(q('dt').value)===Q().norm(x.dict);H.render()});
+ on('lq',function(){LB.res=Q().grade(x.q.map(Q().conv));H.render()});on('lr',function(){LB.res=null;H.render()})}};
+/* ---------- Courses directory ---------- */
+var CF='Check official website for current fees.';
+var RS=[
+['BBC Learning English','English','English','A1–C2','FREE','Lessons, news and pronunciation videos','https://www.bbc.co.uk/learningenglish'],
+['British Council LearnEnglish','English','English','A1–C2','FREE + PAID','Free practice materials; paid courses also exist','https://learnenglish.britishcouncil.org'],
+['Cambridge English','English','English','A1–C2','FREE + PAID','Exam preparation and free practice resources','https://www.cambridgeenglish.org'],
+['OpenLearn (Open University)','English / Academic','English','Varies','FREE','Free university-style courses on many subjects','https://www.open.edu/openlearn'],
+['English with Lucy','English','English','A1–C2','FREE','British English video lessons on YouTube','https://www.youtube.com/@EnglishwithLucy'],
+['Coursera','English / Academic','English','Varies','FREE + PAID','Free auditing on many courses; certificates usually need payment','https://www.coursera.org'],
+['edX','English / Academic','English','Varies','FREE + PAID','Free auditing on many courses; verified certificates are paid','https://www.edx.org'],
+['Deutsche Welle: Learn German','German','German','A1–C1','FREE','Courses and videos, including the Nicos Weg course','https://learngerman.dw.com'],
+['Goethe-Institut','German','German','A1–C2','FREE + PAID','Free online materials; courses and exams are paid','https://www.goethe.de'],
+['VHS Lernportal','German','German','A1–B1+','FREE + PAID','German courses from adult-education centres','https://www.vhs-lernportal.de'],
+['Easy German','German','German','A1–C1','FREE','Street-interview videos with subtitles; some extras may be paid','https://www.easygerman.org'],
+['lingoni','German','German','A1–B2','FREE + PAID','Video lessons; some content is paid','https://www.lingoni.com']];
+var RQ='';
+H.mods.resources={html:function(){var l=RS.filter(function(r){return(r.join(' ')).toLowerCase().indexOf(RQ.toLowerCase())>-1});
+ return '<h1>'+H.t('resources')+'</h1><input id="rq" placeholder="'+L('Search','بحث')+'" value="'+H.esc(RQ)+'" style="width:100%"><p class="msg">'+L('No prices are shown because fees change. Free courses and paid courses are labelled separately. Egyptian language centres are not listed yet: they will be added only after being verified.','لا تظهر أسعار لأنها تتغير. الدورات المجانية والمدفوعة موضحة بوضوح. مراكز اللغات المصرية غير مدرجة بعد وستضاف بعد التحقق منها.')+'</p>'+
+ l.map(function(r){return '<div class="card"><b>'+r[0]+'</b> <span class="chip">'+r[4]+'</span><br><span class="msg">'+r[1]+' · '+r[3]+'</span><p>'+r[5]+'</p><span class="msg">'+L('Certificate: check the website. ','الشهادة: راجعي الموقع. ')+CF+'</span><br><br><a href="'+r[6]+'" target="_blank" rel="noopener">'+L('Official website','الموقع الرسمي')+'</a></div><br>'}).join('')},
+ bind:function(){var e=q('rq');e.oninput=function(){RQ=e.value;var p=e.selectionStart;H.render();var n=q('rq');n.focus();n.setSelectionRange(p,p)}}};
+/* ---------- Progress and achievements ---------- */
+function streak(){var S=H.S,d=new Date(),n=0;function m(k){return S.sessions.some(function(s){return s.d===k&&s.min>0})}if(!m(H.ds(d)))d.setDate(d.getDate()-1);while(m(H.ds(d))){n++;d.setDate(d.getDate()-1)}return n}
+function sum(days){var t=0,S=H.S;for(var i=0;i<days;i++){var d=new Date();d.setDate(d.getDate()-i);var k=H.ds(d);S.sessions.forEach(function(s){if(s.d===k)t+=s.min})}return t}
+H.mods.progress={html:function(){var S=H.S,tot=S.sessions.reduce(function(a,s){return a+s.min},0),learned=S.vocab.filter(function(w){return w.box>=3}).length;
+ var A=[['First study session','Log one study session',S.sessions.length>=1],['Seven-day streak','Study seven days in a row',streak()>=7],['First lesson passed','Pass a lesson exam with 80% or more',S.lessonsDone.length>=1],['Three lessons passed','Pass three lesson exams',S.lessonsDone.length>=3],['Perfect score','Score 100% on an exam',S.exams.some(function(e){return e.score===100})],['Ten words saved','Save ten words in your notebook',S.vocab.length>=10],['Five words learned','Move five words to box 3 or higher',learned>=5],['First task completed','Tick off a planner task',S.tasks.some(function(t){return t.done})],['Ten hours','Study for ten hours in total',tot>=600]];
+ return '<h1>'+H.t('progress')+'</h1><div class="grid"><div class="card"><div class="lbl">'+L('Last 7 days (min)','آخر 7 أيام (دقيقة)')+'</div><div class="num">'+sum(7)+'</div></div><div class="card"><div class="lbl">'+L('Last 30 days (min)','آخر 30 يوماً (دقيقة)')+'</div><div class="num">'+sum(30)+'</div></div><div class="card"><div class="lbl">'+L('Words learned','كلمات متقنة')+'</div><div class="num">'+learned+'</div></div><div class="card"><div class="lbl">'+L('Streak','أيام متتالية')+'</div><div class="num">'+streak()+'</div></div></div>'+
+ '<div class="card"><h2>'+L('Achievements','الإنجازات')+'</h2>'+A.map(function(a){return '<div class="item"><span>'+(a[2]?'🏆 ':'🔒 ')+'<b>'+a[0]+'</b><br><span class="msg">'+a[1]+'</span></span></div>'}).join('')+'</div>'}};
+})();
+
+</script>
+<script>
+(function(){
+var H=Hub,L=H.L,q=function(i){return document.getElementById(i)};
+function tb(h,rows){return '<table><tr>'+h.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(x){return '<td>'+x+'</td>'}).join('')+'</tr>'}).join('')+'</table>'}
+var W=[
+['Tenses at a glance','English',tb(['Tense','Form','Example'],[['Present simple','base / -s','She studies every day.'],['Present continuous','am/is/are + -ing','She is studying now.'],['Present perfect','have/has + past participle','She has studied for two hours.'],['Past simple','past form','She studied yesterday.'],['Past continuous','was/were + -ing','She was studying at 9.'],['Past perfect','had + past participle','She had studied before the exam.'],['Future','will + base / be going to','She will study tonight.']])],
+['Irregular verbs (common)','English',tb(['Base','Past simple','Past participle'],[['be','was / were','been'],['go','went','gone'],['have','had','had'],['do','did','done'],['see','saw','seen'],['take','took','taken'],['make','made','made'],['come','came','come'],['give','gave','given'],['write','wrote','written'],['eat','ate','eaten'],['buy','bought','bought'],['bring','brought','brought'],['think','thought','thought'],['know','knew','known'],['speak','spoke','spoken'],['read','read','read'],['run','ran','run'],['begin','began','begun'],['drink','drank','drunk']])],
+['Conditionals','English',tb(['Type','Form','Example'],[['Zero','if + present, present','If you heat ice, it melts.'],['First','if + present, will + base','If it rains, we will stay in.'],['Second','if + past, would + base','If I had time, I would travel.'],['Third','if + past perfect, would have + pp','If I had studied, I would have passed.']])],
+['in / on / at','English','<p><b>Time:</b> at 6 o’clock, at night, at the weekend (British); on Monday, on 5 May; in May, in 2026, in the morning.</p><p><b>Place:</b> at the bus stop (a point); on the table (a surface); in the room (inside).</p>'],
+['Modal verbs','English',tb(['Modal','Meaning','Example'],[['can','ability, permission','I can swim.'],['could','past ability, polite request','Could you help me?'],['may / might','possibility','It might rain.'],['must','strong obligation','You must wear a seat belt.'],['have to','external obligation','I have to work tomorrow.'],['should','advice','You should sleep more.']])+'<p>After a modal, use the base verb without to.</p>'],
+['Phrasal verbs (10 useful)','English',tb(['Verb','Meaning'],[['look up','search for information'],['give up','stop trying'],['turn on / off','start / stop a device'],['find out','discover'],['carry on','continue'],['get on with','have a good relationship with'],['put off','delay'],['come across','find by chance'],['look forward to','wait with pleasure (+ -ing)'],['set up','establish or arrange']])],
+['Passive voice','English','<p>Form: <b>be + past participle</b>. Use it when the action matters more than who did it.</p><p>Active: The teacher marked the exams. → Passive: The exams were marked by the teacher.</p><p>Passive forms: is made, was made, has been made, will be made, can be made.</p>'],
+['Reported speech','English',tb(['Direct','Reported'],[['present simple','past simple'],['present continuous','past continuous'],['past simple','past perfect'],['will','would'],['can','could'],['today / tomorrow','that day / the next day']])+'<p>“I am tired,” she said → She said (that) she was tired.</p>'],
+['Relative clauses','English','<p><b>who</b> for people, <b>which</b> for things, <b>that</b> for either (defining clauses), <b>whose</b> for possession, <b>where</b> for places.</p><p>The student who sits next to me is from Alexandria. / The book that I bought is useful.</p><p>Non-defining clauses add extra information with commas: My sister, who lives in Cairo, is a teacher.</p>'],
+['make vs do','English','<p><b>make:</b> a mistake, a decision, a cup of tea, progress, money, an effort.</p><p><b>do:</b> homework, the housework, your best, research, an exam (British: take or sit an exam).</p>'],
+['Linking words','English',tb(['Purpose','Words'],[['Contrast','however, although, despite, whereas'],['Addition','moreover, in addition, also'],['Result','therefore, as a result, so'],['Reason','because, since, due to'],['Sequence','first, then, finally']])],
+['Writing essays and citing sources','Academic','<p><b>Essay:</b> introduction (hook, background, thesis), body paragraphs (topic sentence, evidence, explanation), conclusion (restate thesis, summarise, final thought).</p><p><b>Citation:</b> APA, MLA and Harvard are common styles. In-text examples: (Smith, 2020) in APA and Harvard; (Smith 45) in MLA. Always ask your department which style is required.</p>'],
+['German cases','German',tb(['Case','masc.','fem.','neut.','plural'],[['Nominativ','der','die','das','die'],['Akkusativ','den','die','das','die'],['Dativ','dem','der','dem','den (+n)'],['Genitiv','des (+s)','der','des (+s)','der']])+'<p>Nominative = subject. Accusative = direct object. Dative = indirect object. Genitive = possession.</p>'],
+['German personal pronouns','German',tb(['Nominativ','Akkusativ','Dativ'],[['ich','mich','mir'],['du','dich','dir'],['er','ihn','ihm'],['sie','sie','ihr'],['es','es','ihm'],['wir','uns','uns'],['ihr','euch','euch'],['sie / Sie','sie / Sie','ihnen / Ihnen']])],
+['German word order','German','<p><b>Main clause:</b> the verb is in position 2. Ich lerne heute Deutsch. / Heute lerne ich Deutsch.</p><p><b>Yes/no question:</b> verb first. Lernst du Deutsch?</p><p><b>W-question:</b> question word, verb, subject. Was lernst du?</p><p><b>Subordinate clause</b> (weil, dass, wenn, ob): verb at the end. Ich bleibe zu Hause, weil ich müde bin.</p>'],
+['German modal verbs','German',tb(['','können','müssen','wollen','sollen','dürfen','mögen'],[['ich','kann','muss','will','soll','darf','mag'],['du','kannst','musst','willst','sollst','darfst','magst'],['er/sie/es','kann','muss','will','soll','darf','mag'],['wir/sie','können','müssen','wollen','sollen','dürfen','mögen']])+'<p>The second verb goes to the end in the infinitive: Ich kann gut schwimmen.</p>'],
+['German separable verbs','German','<p>The prefix separates in main clauses and goes to the end: <i>anrufen</i> → Ich rufe dich an. <i>aufstehen</i> → Er steht um 7 Uhr auf. <i>einkaufen</i> → Wir kaufen heute ein.</p><p>In the infinitive and with modals they stay together: Ich muss früh aufstehen.</p>'],
+['Two-way prepositions','German','<p>an, auf, hinter, in, neben, über, unter, vor, zwischen.</p><p><b>Wo? (location) → Dativ:</b> Das Buch liegt auf dem Tisch.</p><p><b>Wohin? (movement) → Akkusativ:</b> Ich lege das Buch auf den Tisch.</p>'],
+['German Perfekt (spoken past)','German','<p>haben or sein + Partizip II. <i>Ich habe Deutsch gelernt.</i> <i>Ich bin nach Berlin gefahren.</i></p><p>Use <b>sein</b> for movement or change of state (gehen, kommen, fahren, bleiben, sein, werden); use <b>haben</b> for most other verbs.</p>'],
+['German numbers and days','German',tb(['0–20','Days'],[['null, eins, zwei, drei, vier, fünf, sechs, sieben, acht, neun, zehn','Montag, Dienstag, Mittwoch, Donnerstag, Freitag, Samstag, Sonntag'],['elf, zwölf, dreizehn, vierzehn, fünfzehn, sechzehn, siebzehn, achtzehn, neunzehn, zwanzig','Months: Januar, Februar, März, April, Mai, Juni, Juli, August, September, Oktober, November, Dezember']])],
+['Konjunktiv II basics','German','<p>For wishes and polite requests: <b>wäre</b> (sein), <b>hätte</b> (haben), <b>würde + Infinitiv</b>.</p><p>Ich hätte gern einen Kaffee. / Wenn ich Zeit hätte, würde ich reisen. / Wäre ich nur reicher!</p>'],
+['Phonetics and phonology','Linguistics','<p><b>Phonetics</b> studies physical speech sounds (articulatory, acoustic, auditory). <b>Phonology</b> studies how sounds work as a system.</p><p><b>Phoneme:</b> smallest sound unit that changes meaning (/p/ vs /b/ in pat/bat). <b>Allophone:</b> a variant of a phoneme (aspirated and unaspirated /p/). <b>Minimal pair:</b> two words differing in one phoneme.</p>'],
+['Morphology and syntax','Linguistics','<p><b>Morpheme:</b> smallest unit of meaning. <b>Free</b> (book) or <b>bound</b> (un-, -ed). Types: root, prefix, suffix; inflectional (plural -s) and derivational (happy → happiness).</p><p><b>Syntax:</b> how words form phrases and sentences. Constituents: noun phrase, verb phrase, clause. Tree diagrams show structure.</p>'],
+['Semantics and pragmatics','Linguistics','<p><b>Semantics:</b> meaning of words and sentences (synonymy, antonymy, polysemy, hyponymy).</p><p><b>Pragmatics:</b> meaning in context. <b>Speech acts</b> (Austin, Searle): locutionary, illocutionary, perlocutionary. <b>Grice’s maxims:</b> quantity, quality, relation, manner. <b>Deixis:</b> words that depend on context (I, here, now).</p>'],
+['Sociolinguistics','Linguistics','<p><b>Register:</b> language variety by situation (formal, informal). <b>Dialect:</b> variety by region or group. <b>Diglossia:</b> two varieties used in different functions (Modern Standard Arabic and colloquial Arabic). <b>Code-switching:</b> alternating between languages in conversation.</p>'],
+['Translation theory','Translation','<p><b>Nida:</b> formal equivalence (stays close to form) vs dynamic equivalence (same effect on the reader). <b>Newmark:</b> semantic vs communicative translation. <b>Venuti:</b> domestication (natural for target readers) vs foreignisation (keeps the foreign feel). <b>Skopos theory (Vermeer):</b> the purpose of the translation decides the method.</p><p>Common problems: false friends, idioms, cultural terms, word order, register.</p>'],
+['Interpreting basics','Translation','<p><b>Consecutive:</b> the speaker pauses, the interpreter renders the speech, usually with notes. <b>Simultaneous:</b> the interpreter speaks almost at the same time as the speaker, usually from a booth.</p><p>Skills: active listening, memory, note-taking with symbols, paraphrasing, staying neutral.</p>'],
+['Literary terms','Literature',tb(['Term','Meaning'],[['simile','comparison with like or as'],['metaphor','direct comparison without like or as'],['personification','giving human qualities to things'],['irony','meaning the opposite, or a gap between expectation and reality'],['alliteration','repeated initial consonant sounds'],['sonnet','14-line poem'],['iambic pentameter','five pairs of unstressed + stressed syllables per line'],['stream of consciousness','narration that follows a character’s thoughts'],['protagonist / antagonist','main character / opposing force']])]];
+var C=['','English','German','Linguistics','Translation','Literature','Academic'],S={q:'',c:''};
+H.mods.wiki={html:function(){var l=W.filter(function(e){return(!S.c||e[1]===S.c)&&(!S.q||(e[0]+' '+e[2].replace(/<[^>]+>/g,' ')).toLowerCase().indexOf(S.q.toLowerCase())>-1)});
+ return '<h1>'+H.t('wiki')+'</h1><p class="msg">'+W.length+' '+L('reference topics. Search or choose a subject.','موضوعاً مرجعياً. ابحثي أو اختاري مادة.')+'</p><div class="row"><input id="wq" placeholder="'+L('Search (e.g. conditionals, Dativ, morpheme)','ابحثي (مثلاً conditionals أو Dativ)')+'" value="'+H.esc(S.q)+'" style="flex:1"><select id="wc">'+C.map(function(c){return '<option value="'+c+'"'+(S.c===c?' selected':'')+'>'+(c||L('All','الكل'))+'</option>'}).join('')+'</select></div><br>'+
+ (l.length?l.map(function(e){return '<div class="card"><details'+(S.q&&l.length<4?' open':'')+'><summary>'+e[0]+' <span class="chip">'+e[1]+'</span></summary><div style="overflow-x:auto;margin-top:8px">'+e[2]+'</div></details></div><br>'}).join(''):'<p class="msg">'+L('Nothing found. Try another word.','لا نتائج. جرّبي كلمة أخرى.')+'</p>')},
+ bind:function(){var e=q('wq');e.oninput=function(){S.q=e.value;var p=e.selectionStart;H.render();var n=q('wq');n.focus();n.setSelectionRange(p,p)};q('wc').onchange=function(){S.c=this.value;H.render()}}};
+function menu(title,keys,note){return {html:function(){return '<h1>'+title()+'</h1>'+(note?'<p class="msg">'+note()+'</p>':'')+'<div class="grid">'+keys.map(function(k){return '<a class="card" href="#'+k[0]+'" style="text-decoration:none;color:inherit"><b>'+k[1]+' '+H.t(k[0])+'</b></a>'}).join('')+'</div>'}}}
+H.mods.study=menu(function(){return H.t('study')},[['english','🇬🇧'],['german','🇩🇪'],['alsun','🎓'],['wiki','📖']]);
+H.mods.practice=menu(function(){return H.t('practice')},[['sentences','🎙'],['translator','🔁'],['pron','🔊'],['tprac','✍️'],['library','🎧'],['mistakes','📝']]);
+H.mods.more=menu(function(){return H.t('more')},[['planner','🗓'],['progress','🏆'],['resources','🔗'],['settings','⚙️']]);
+H.cont=function(){var out=null;['english','german'].forEach(function(k){if(out||!window.COURSE||!COURSE[k])return;COURSE[k].levels.forEach(function(l){l.units.forEach(function(u){u.lessons.forEach(function(x){if(!out&&H.S.lessonsDone.indexOf(x.id)<0)out={k:k,id:x.id,title:x.title}})})})});return out};
+})();
+
+</script>
+<script>
+(function(){
+var H=Hub,L=H.L,q=function(i){return document.getElementById(i)};
+var SEN={en:[
+['Daily life',[["Good morning! How are you today?","صباح الخير! كيف حالك اليوم؟"],["I'm fine, thank you. And you?","أنا بخير، شكراً. وأنت؟"],["Nice to meet you.","سررت بلقائك."],["Could you say that again, please?","هل يمكنك إعادة ذلك من فضلك؟"],["Sorry, I didn't catch that.","آسف، لم أفهم ما قلته."],["What time does the lesson start?","متى يبدأ الدرس؟"],["I'm running late.","أنا متأخر."],["See you tomorrow.","أراك غداً."],["Have a lovely weekend!","عطلة أسبوع جميلة!"],["Would you like a cup of tea?","هل تودّ فنجان شاي؟"]]],
+['University',[["Where is the library, please?","أين المكتبة من فضلك؟"],["I'm studying English at university.","أدرس اللغة الإنجليزية في الجامعة."],["When is the essay due?","متى موعد تسليم المقال؟"],["Could you explain this word to me?","هل يمكنك شرح هذه الكلمة لي؟"],["I have a seminar at ten o'clock.","عندي ندوة الساعة العاشرة."],["Can I borrow your notes?","هل يمكنني استعارة ملاحظاتك؟"],["The exam is next Tuesday.","الامتحان يوم الثلاثاء القادم."],["I need to hand in my assignment.","يجب أن أسلّم واجبي."],["Let's revise together this evening.","لنراجع معاً هذا المساء."],["The lecture was really interesting.","كانت المحاضرة ممتعة جداً."]]],
+['Travel in Britain',[["Which platform does the train leave from?","من أي رصيف يغادر القطار؟"],["A single ticket to London, please.","تذكرة ذهاب فقط إلى لندن من فضلك."],["Mind the gap.","انتبه للفجوة بين القطار والرصيف."],["Is there a chemist near here?","هل توجد صيدلية قريبة من هنا؟"],["I'd like a return ticket.","أريد تذكرة ذهاب وعودة."],["Excuse me, how do I get to the city centre?","عفواً، كيف أصل إلى وسط المدينة؟"],["It's just round the corner.","إنها قريبة، عند الناصية."],["The bus is running late today.","الحافلة متأخرة اليوم."],["Could I have the bill, please?","هل يمكنني الحصول على الفاتورة من فضلك؟"],["Cheers, thanks a lot!","شكراً جزيلاً! (عامية بريطانية)"]]],
+['Opinions and fluency',[["In my opinion, it's a good idea.","في رأيي، هذه فكرة جيدة."],["I completely agree with you.","أتفق معك تماماً."],["I'm not sure about that.","لست متأكداً من ذلك."],["That depends on the situation.","هذا يعتمد على الموقف."],["Could you give me an example?","هل يمكنك إعطائي مثالاً؟"],["As far as I know, it opens at nine.","حسب علمي، يفتح الساعة التاسعة."],["I'd rather stay at home tonight.","أفضّل البقاء في البيت الليلة."],["It's up to you.","الأمر متروك لك."],["I'm looking forward to the holidays.","أتطلع إلى الإجازة."],["Never mind, it doesn't matter.","لا عليك، لا يهم."]]]],
+de:[
+['Alltag',[["Guten Morgen! Wie geht es dir?","صباح الخير! كيف حالك؟"],["Mir geht es gut, danke.","أنا بخير، شكراً."],["Freut mich, dich kennenzulernen.","سررت بلقائك."],["Können Sie das bitte wiederholen?","هل يمكنكم إعادة ذلك من فضلكم؟"],["Ich verstehe das nicht.","لا أفهم ذلك."],["Sprechen Sie bitte langsamer.","تحدثوا ببطء من فضلكم."],["Wie spät ist es?","كم الساعة؟"],["Bis morgen!","إلى الغد!"],["Schönes Wochenende!","عطلة أسبوع سعيدة!"],["Möchten Sie einen Tee?","هل تودّون شاياً؟"]]],
+['Universität und Reise',[["Wo ist die Bibliothek?","أين المكتبة؟"],["Ich studiere Englisch an der Universität.","أدرس الإنجليزية في الجامعة."],["Wann beginnt die Vorlesung?","متى تبدأ المحاضرة؟"],["Ich habe morgen eine Prüfung.","عندي امتحان غداً."],["Wo ist der Bahnhof?","أين محطة القطار؟"],["Eine Fahrkarte nach Berlin, bitte.","تذكرة إلى برلين من فضلك."],["Von welchem Gleis fährt der Zug?","من أي رصيف يغادر القطار؟"],["Wie komme ich zum Stadtzentrum?","كيف أصل إلى وسط المدينة؟"],["Die Rechnung, bitte.","الفاتورة من فضلك."],["Ich hätte gern einen Kaffee.","أودّ فنجان قهوة."]]],
+['Meinungen und Gefühle',[["Meiner Meinung nach ist das eine gute Idee.","في رأيي، هذه فكرة جيدة."],["Ich bin ganz deiner Meinung.","أتفق معك تماماً."],["Das hängt davon ab.","هذا يعتمد."],["Ich freue mich auf die Ferien.","أتطلع إلى الإجازة."],["Das ist mir egal.","لا يهمني."],["Ich lerne seit einem Jahr Deutsch.","أتعلم الألمانية منذ سنة."],["Entschuldigung, wo ist die Toilette?","عفواً، أين دورة المياه؟"],["Es tut mir leid.","أنا آسف."],["Kein Problem!","لا مشكلة!"],["Alles Gute zum Geburtstag!","عيد ميلاد سعيد!"]]]]};
+var DL={en:[
+['At the café',[['A','Hello, what can I get you?','مرحباً، ماذا تودّ؟'],['B','A cup of tea and a slice of cake, please.','فنجان شاي وقطعة كيك من فضلك.'],['A','Would you like milk with your tea?','هل تودّ حليباً مع الشاي؟'],['B','Yes, please.','نعم من فضلك.'],['A','That will be four pounds fifty.','الحساب أربعة جنيهات وخمسون بنساً.'],['B','Here you are. Thank you.','تفضّل. شكراً.']]],
+['Asking for directions',[['A','Excuse me, is there a post office near here?','عفواً، هل يوجد مكتب بريد قريب؟'],['B','Yes, go straight on and turn left at the traffic lights.','نعم، امشِ مباشرة ثم انعطف يساراً عند إشارة المرور.'],['A','Is it far?','هل هو بعيد؟'],['B','No, it takes about five minutes on foot.','لا، يستغرق نحو خمس دقائق سيراً.'],['A','Thank you very much.','شكراً جزيلاً.'],['B',"You're welcome.",'عفواً.']]]],
+de:[
+['Im Café',[['A','Guten Tag, was möchten Sie?','طاب يومك، ماذا تودّون؟'],['B','Einen Kaffee und ein Stück Kuchen, bitte.','فنجان قهوة وقطعة كعك من فضلك.'],['A','Mit Milch?','مع حليب؟'],['B','Ja, bitte.','نعم من فضلك.'],['A','Das macht vier Euro fünfzig.','الحساب أربعة يورو وخمسون سنتاً.'],['B','Hier, bitte. Danke!','تفضّل. شكراً!']]],
+['Sich vorstellen',[['A','Hallo, ich heiße Anna. Und du?','مرحباً، اسمي آنا. وأنت؟'],['B','Ich heiße Shadn. Ich komme aus Ägypten.','اسمي شادن. أنا من مصر.'],['A','Toll! Was machst du?','رائع! ماذا تعمل؟'],['B','Ich studiere Englisch.','أدرس الإنجليزية.'],['A','Freut mich!','سررت!'],['B','Freut mich auch.','وأنا أيضاً.']]]]};
+var D={l:'en',acc:'gb',c:0,rate:1,ar:true,stop:false};
+function ac(){return D.l==='de'?'de':D.acc}
+function chain(items,i){if(D.stop||i>=items.length)return;H.rate=D.rate;q('vm').textContent=H.speak(items[i],ac(),null,function(){setTimeout(function(){chain(items,i+1)},500)})}
+function play(items){if(!H.has(ac())){H.rate=D.rate;q('vm').textContent=H.speak(items[0],ac());return}D.stop=false;chain(items,0)}
+H.mods.sentences={html:function(){var cats=SEN[D.l],c=cats[Math.min(D.c,cats.length-1)];
+ return '<h1>'+H.t('sentences')+'</h1><p class="msg">'+L('Original sentences and dialogues read by your device’s voices. Tap to listen, then repeat out loud.','جمل وحوارات أصلية تُقرأ بأصوات جهازك. اضغطي للاستماع ثم كرري بصوت عالٍ.')+'</p>'+
+ '<div class="row"><select id="sl"><option value="en"'+(D.l==='en'?' selected':'')+'>English</option><option value="de"'+(D.l==='de'?' selected':'')+'>Deutsch</option></select>'+
+ (D.l==='en'?'<select id="sa"><option value="gb"'+(D.acc==='gb'?' selected':'')+'>British</option><option value="us"'+(D.acc==='us'?' selected':'')+'>American</option></select>':'')+
+ '<select id="sr"><option value="1"'+(D.rate===1?' selected':'')+'>'+L('Normal','عادي')+'</option><option value="0.8"'+(D.rate===0.8?' selected':'')+'>'+L('Slow','بطيء')+'</option><option value="0.6"'+(D.rate===0.6?' selected':'')+'>'+L('Very slow','بطيء جداً')+'</option></select>'+
+ '<label><input type="checkbox" id="st"'+(D.ar?' checked':'')+'> '+L('Arabic','العربية')+'</label></div><br>'+
+ '<div class="row"><select id="sc">'+cats.map(function(x,i){return '<option value="'+i+'"'+(i===D.c?' selected':'')+'>'+x[0]+'</option>'}).join('')+'</select><button class="small" id="pa">▶ '+L('Play all','تشغيل الكل')+'</button><button class="ghost small" id="px">■</button></div><div class="msg" id="vm"></div>'+
+ '<div class="card">'+c[1].map(function(s,i){return '<div class="item"><span dir="auto"><b>'+H.esc(s[0])+'</b>'+(D.ar?'<br><span class="msg" dir="rtl">'+s[1]+'</span>':'')+'</span><span class="row"><button class="ghost small" data-p="'+i+'">▶</button><button class="ghost small" data-s="'+i+'">💾</button></span></div>'}).join('')+'</div><br>'+
+ '<h2>'+L('Dialogues','حوارات')+'</h2>'+DL[D.l].map(function(d,k){return '<div class="card"><b>'+d[0]+'</b> <button class="ghost small" data-d="'+k+'">▶ '+L('Play','تشغيل')+'</button>'+d[1].map(function(l,i){return '<div class="item"><span dir="auto"><b>'+l[0]+':</b> '+H.esc(l[1])+(D.ar?'<br><span class="msg" dir="rtl">'+l[2]+'</span>':'')+'</span><button class="ghost small" data-l="'+k+','+i+'">▶</button></div>'}).join('')+'</div><br>'}).join('')+
+ '<div class="card"><h2>'+L('Real speech and film clips','كلام حقيقي ومقاطع أفلام')+'</h2><p class="msg">'+L('Film clips are protected by copyright, so they are not included here. Use these free external sites for real native speech and check each site for what is available:','مقاطع الأفلام محمية بحقوق النشر فلا أضعها هنا. استخدمي هذه المواقع المجانية للكلام الحقيقي وراجعي ما يتوفر في كل منها:')+'</p><a href="https://youglish.com" target="_blank" rel="noopener">YouGlish</a> · <a href="https://www.bbc.co.uk/learningenglish" target="_blank" rel="noopener">BBC Learning English</a> · <a href="https://learngerman.dw.com" target="_blank" rel="noopener">DW Learn German</a></div>'},
+ bind:function(){function cur(){var c=SEN[D.l];return c[Math.min(D.c,c.length-1)][1]}
+ q('sl').onchange=function(){D.l=this.value;D.c=0;H.render()};if(q('sa'))q('sa').onchange=function(){D.acc=this.value;H.render()};
+ q('sr').onchange=function(){D.rate=parseFloat(this.value);H.render()};q('st').onchange=function(){D.ar=this.checked;H.render()};q('sc').onchange=function(){D.c=+this.value;H.render()};
+ q('px').onclick=function(){D.stop=true;if('speechSynthesis' in window)speechSynthesis.cancel()};
+ q('pa').onclick=function(){play(cur().map(function(s){return s[0]}))};
+ [].forEach.call(document.querySelectorAll('[data-p]'),function(b){b.onclick=function(){D.stop=true;H.rate=D.rate;q('vm').textContent=H.speak(cur()[b.dataset.p][0],ac())}});
+ [].forEach.call(document.querySelectorAll('[data-d]'),function(b){b.onclick=function(){play(DL[D.l][b.dataset.d][1].map(function(l){return l[1]}))}});
+ [].forEach.call(document.querySelectorAll('[data-l]'),function(b){b.onclick=function(){var p=b.dataset.l.split(',');D.stop=true;H.rate=D.rate;q('vm').textContent=H.speak(DL[D.l][p[0]][1][p[1]][1],ac())}});
+ [].forEach.call(document.querySelectorAll('[data-s]'),function(b){b.onclick=function(){var s=cur()[b.dataset.s];if(!H.S.vocab.some(function(w){return w.word===s[0]}))H.S.vocab.push({id:Date.now(),word:s[0],lang:D.l,ar:s[1],ipa:'',tr:'',def:'',ex:'',syn:'',ant:'',fam:'',pos:'',level:'',cat:'Sentence',fav:false,hard:false,box:0,due:H.ds(new Date())});H.save();H.toast(L('Saved','تم الحفظ'))}})}};
+})();
+
+</script>
+</body>
+</html>
